@@ -1,0 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Caveat:wght@500;600;700&display=swap');
+
+@import 'tailwindcss';
+@plugin '@tailwindcss/forms';
+
+@import '@skeletonlabs/skeleton';
+@import '@skeletonlabs/skeleton-svelte';
+@import '@skeletonlabs/skeleton/themes/cerberus';
+
+@theme {
+	--color-cream: #fbf6f1;
+	--color-blush-100: #fdeaf1;
+	--color-blush-300: #f6c9dc;
+	--color-blush-500: #e8a3c4;
+	--color-lavender-200: #e6e0f8;
+	--color-lavender-400: #c9baef;
+	--color-mint-200: #dcf3e6;
+	--color-butter-300: #fbe39a;
+	--color-ink: #3a2a33;
+	--color-ink-soft: #6b5866;
+
+	--font-display: 'Fraunces', serif;
+	--font-sans: 'Plus Jakarta Sans', sans-serif;
+	--font-script: 'Caveat', cursive;
+}
+
+body {
+	background-color: var(--color-cream);
+	color: black;
+}
