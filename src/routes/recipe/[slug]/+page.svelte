@@ -3,9 +3,10 @@
 	import type { PageProps } from '../$types';
 	import {
 		categoryStyles,
-		categoryLabel,
 		formatMinutes
 	} from '$lib/components/recipes/utils/recipe-style';
+	import NumberStepper from '$lib/components/recipes/NumberStepper.svelte';
+	import { enhance } from '$app/forms';
 
 	let { data }: PageProps = $props();
 	let recipe: Recipe = $derived(data.recipe);
@@ -52,12 +53,13 @@
 			>
 				Edit
 			</a>
-			<a
-				href={`/recipe/${recipe.id}/delete`}
-				class="rounded-full border border-blush-500/50 bg-blush-100 px-4 py-1.5 text-xs font-semibold text-blush-500 transition-colors hover:bg-blush-300 hover:text-ink"
-			>
-				Delete
-			</a>
+			<form method="POST" action="?/delete" use:enhance>
+				<button
+					type="submit"
+					class="rounded-full border border-blush-500/50 bg-blush-100 px-4 py-1.5 text-xs font-semibold text-blush-500 transition-colors hover:bg-blush-300 hover:text-ink"
+					>Delete recipe</button
+				>
+			</form>
 		</div>
 	</div>
 
@@ -100,17 +102,22 @@
 				<h1 class="font-display text-3xl font-semibold text-ink sm:text-4xl">
 					{recipe.title}
 				</h1>
-				{#if recipe.category}
-					<span
-						class={`shrink-0 -rotate-2 rounded-full px-3 py-1 font-script text-base font-semibold shadow-sm ${categoryStyles[recipe.category]}`}
-					>
-						{categoryLabel[recipe.category]}
-					</span>
+				{#if recipe.categories}
+					<div class="flex flex-wrap gap-2">
+						{#each recipe.categories as category (category)}
+							<span
+								class={`shrink-0 -rotate-2 rounded-full px-3 py-1 font-script text-base font-semibold shadow-sm ` +
+									categoryStyles[category]}
+							>
+								{String(category).replace(/^\w/, (c) => c.toUpperCase())}
+							</span>
+						{/each}
+					</div>
 				{/if}
 			</div>
 
 			<div class="flex flex-wrap items-center gap-2 text-xs text-ink-soft">
-				<span>By {recipe.authorName ?? 'Unknown'}</span>
+				<span>By {recipe.author.username ?? 'Unknown'}</span>
 				<span class="opacity-40">·</span>
 				<span>{recipe.createdAt?.toLocaleDateString() ?? 'Undated'}</span>
 			</div>
@@ -189,15 +196,20 @@
 	>
 		<div class="flex flex-wrap items-center justify-between gap-3">
 			<h2 class="font-display text-2xl font-semibold text-ink">Ingredients</h2>
-			<label class="flex items-center gap-2 text-xs font-medium text-ink-soft">
+			<div class="flex items-center gap-2 text-xs font-medium text-ink-soft">
 				Servings
-				<input
-					type="number"
-					min="1"
-					bind:value={servings}
-					class="w-16 rounded-full bg-blush-100 px-3 py-1 text-center text-sm font-semibold text-ink focus:outline-none"
+				<NumberStepper
+					id="servings-compact"
+					name="servings"
+					label="Servings"
+					value={servings}
+					min={1}
+					max={50}
+					variant="pill"
+					size="sm"
+					onchange={(v) => (servings = v)}
 				/>
-			</label>
+			</div>
 		</div>
 		<ul class="flex flex-col divide-y divide-ink/5">
 			{#each recipe.ingredients as ing, idx (idx + '-ing')}

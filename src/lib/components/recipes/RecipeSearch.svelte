@@ -1,23 +1,23 @@
 <script lang="ts">
-	import type { Category, SortOption } from '$lib/types/recipe';
+	import type { SortOption } from '$lib/types';
 
 	let {
 		query = $bindable(''),
-		category = $bindable('all'),
+		selectedCategory = $bindable('all'),
+		categories,
 		sort = $bindable('newest')
 	}: {
 		query?: string;
-		category?: Category;
+		selectedCategory?: string;
+		categories: {
+			id?: string;
+			createdAt?: Date | null;
+			name: string;
+		}[];
 		sort?: SortOption;
 	} = $props();
 
 	let filtersOpen = $state(false);
-
-	const categories: { value: Category; label: string }[] = [
-		{ value: 'all', label: 'All' },
-		{ value: 'dinner', label: 'Dinner' },
-		{ value: 'dessert', label: 'Dessert' }
-	];
 
 	const sorts: { value: SortOption; label: string }[] = [
 		{ value: 'newest', label: 'Newest first' },
@@ -76,18 +76,20 @@
 		<div
 			class="flex flex-wrap items-center gap-2 rounded-2xl bg-white p-3 ring-1 ring-ink/5"
 		>
-			<span class="mr-1 text-xs font-medium text-ink-soft">Category</span>
-			{#each categories as c (c.value)}
+			<span class="mr-1 text-xs font-medium text-ink-soft"
+				>selectedCategory</span
+			>
+			{#each categories as c (c.name)}
 				<button
 					type="button"
-					onclick={() => (category = c.value)}
+					onclick={() => (selectedCategory = c.name)}
 					class={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-						category === c.value
+						selectedCategory === c.name
 							? 'bg-ink text-cream'
 							: 'bg-blush-100 text-ink-soft hover:bg-blush-300'
 					}`}
 				>
-					{c.label}
+					{c.name}
 				</button>
 			{/each}
 

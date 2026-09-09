@@ -1,9 +1,18 @@
 import * as v from 'valibot';
 
 export const IngredientSchema = v.object({
-	name: v.pipe(v.string(), v.minLength(1, 'Name is required')),
-	amount: v.pipe(v.number(), v.minValue(0, 'Amount must be a positive number')),
-	unit: v.pipe(v.string(), v.minLength(1, 'Unit is required'))
+	sectionName: v.optional(
+		v.pipe(v.string(), v.minLength(1, 'Name is required'))
+	),
+	name: v.pipe(v.string(), v.trim(), v.nonEmpty()),
+	amount: v.pipe(v.number(), v.minValue(0)),
+	unit: v.optional(v.string())
+});
+export const StepSchema = v.object({
+	sectionName: v.optional(
+		v.pipe(v.string(), v.minLength(1, 'Name is required'))
+	),
+	description: v.pipe(v.string(), v.nonEmpty())
 });
 
 export const CreateRecipeSchema = v.object({
@@ -13,13 +22,21 @@ export const CreateRecipeSchema = v.object({
 		v.minLength(1, 'Title is required'),
 		v.maxLength(255, 'Title must be 255 characters or less')
 	),
-	description: v.pipe(
-		v.string(),
-		v.trim(),
-		v.maxLength(2000, 'Description must be 2000 characters or less')
+	description: v.optional(
+		v.pipe(
+			v.string(),
+			v.trim(),
+			v.maxLength(2000, 'Description must be 2000 characters or less')
+		)
 	),
-	category: v.optional(
-		v.array(v.pipe(v.string(), v.maxLength(50, 'Max category length 50')))
+	categories: v.optional(
+		v.array(
+			v.pipe(
+				v.string(),
+				v.nonEmpty(),
+				v.maxLength(50, 'Max category length 50')
+			)
+		)
 	),
 	cookTime: v.pipe(
 		v.number(),
@@ -38,7 +55,7 @@ export const CreateRecipeSchema = v.object({
 	servings: v.pipe(v.number(), v.minValue(1, 'Servings is required')),
 	notes: v.optional(v.pipe(v.string(), v.trim())),
 	steps: v.pipe(
-		v.array(v.string()),
+		v.array(StepSchema),
 		v.minLength(1, 'At least one step is required')
 	),
 	userId: v.pipe(v.string(), v.trim(), v.minLength(1, 'User ID is required')),
@@ -52,6 +69,11 @@ export const CreateRecipeSchema = v.object({
 });
 
 type CreateRecipe = v.InferOutput<typeof CreateRecipeSchema>;
+
+export const UpdateRecipeSchema = v.partial(CreateRecipeSchema);
+
+export type StepInput = v.InferOutput<typeof StepSchema>;
+
 export const recipeSortingKeys = [
 	'title',
 	'description',
@@ -68,6 +90,7 @@ export const RecipePagingSchema = v.object({
 			v.array(
 				v.pipe(
 					v.string(),
+					v.nonEmpty(),
 					v.check((val) => {
 						const matchSign = val.match(/^[+-]/);
 						const matchKey = recipeSortingKeys.includes(
@@ -80,5 +103,7 @@ export const RecipePagingSchema = v.object({
 			v.minLength(1, 'At least one sort key is required')
 		)
 	),
-	categories: v.optional(v.pipe(v.array(v.string()), v.minLength(1)))
+	categories: v.optional(
+		v.pipe(v.array(v.pipe(v.string(), v.nonEmpty())), v.minLength(1))
+	)
 });

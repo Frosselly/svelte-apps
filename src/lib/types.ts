@@ -21,5 +21,4 @@ export type Recipe = {
 	authorId: string | null;
 };
 
-export type Category = 'all' | 'dessert' | 'dinner';
 export type SortOption = 'newest' | 'oldest' | 'quickest';

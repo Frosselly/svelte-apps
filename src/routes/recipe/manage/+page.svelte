@@ -2,7 +2,7 @@
 	import AddRecipe from '$lib/components/recipes/AddRecipe.svelte';
 	import * as docx from 'docx-preview';
 
-	const { data } = $props();
+	const { form, data } = $props();
 
 	const recipeToEdit = $derived(data.editId ? data.recipeToEdit : null);
 
@@ -21,7 +21,7 @@
 
 <main class="flex gap-12">
 	<section class="max-w w-full">
-		<AddRecipe bind:docFile {recipeToEdit} />
+		<AddRecipe bind:docFile {recipeToEdit} {form} />
 	</section>
 	<section class="max-w h-min w-full overflow-hidden p-4">
 		<h3 class="h3">Doc Preview</h3>

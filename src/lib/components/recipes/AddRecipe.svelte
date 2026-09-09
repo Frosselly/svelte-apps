@@ -1,37 +1,33 @@
 <script lang="ts">
-	import { deserialize } from '$app/forms';
+	import { deserialize, enhance } from '$app/forms';
 	import type { ActionResult } from '@sveltejs/kit';
-	import type { PageProps } from '../../../routes/recipe/$types';
 	import type { CreateRecipeModel, Recipe } from './models';
+	import TimeStepper from './TimeStepper.svelte';
+	import NumberStepper from './NumberStepper.svelte';
+	import type { PageProps } from '../../../routes/recipe/manage/$types';
 
 	type PropsType = Partial<PageProps> & {
 		recipeToEdit?: Recipe;
 		docFile: File | undefined;
 	};
+
 	let { form, docFile = $bindable(), recipeToEdit }: PropsType = $props();
+	let submitting = $state(false);
 
 	const recipeDefault: Omit<CreateRecipeModel, 'userId'> = {
 		title: '',
 		description: '',
-		category: 'dinner',
+		categories: ['dinner'],
 		ingredients: [{ name: '', amount: 1, unit: '' }],
-		steps: [''],
+		steps: [{ description: '' }], // was ['']
 		prepTime: 0,
 		cookTime: 0,
-		servings: 4
+		servings: 4,
+		notes: ''
 	};
 
-	// `recipe` is the single source of truth for the whole form — title,
-	// times, servings, ingredients and steps all live here. Editing
-	// `recipe.ingredients[i]` / `recipe.steps[i]` directly (rather than
-	// keeping separate arrays in sync) means an import or "fill sample
-	// data" action that replaces `recipe` wholesale updates every field
-	// in one go, including the repeatable rows.
 	let recipe = $state(structuredClone(recipeToEdit ?? recipeDefault));
 
-	// Only resets `recipe` in response to a *different* recipeToEdit being
-	// passed in (e.g. navigating from ?editId=1 to ?editId=2). It never
-	// reads `recipe` itself, so it can't re-trigger itself.
 	$effect(() => {
 		recipe = structuredClone(recipeToEdit ?? recipeDefault);
 		newImagePreview = null;
@@ -41,13 +37,6 @@
 	const imagePreview = $derived(
 		newImagePreview ?? recipeToEdit?.imageUrl ?? null
 	);
-
-	function updateHours(field: 'prepTime' | 'cookTime', hours: number) {
-		recipe[field] = hours * 60 + (recipe[field] % 60);
-	}
-	function updateMinutes(field: 'prepTime' | 'cookTime', minutes: number) {
-		recipe[field] = Math.floor(recipe[field] / 60) * 60 + minutes;
-	}
 
 	function handleImageChange(
 		event: Event & { currentTarget: HTMLInputElement }
@@ -85,24 +74,68 @@
 		recipe = structuredClone({
 			title: 'Skillet Lemon Garlic Chicken',
 			description: 'Weeknight chicken thighs in a bright, garlicky pan sauce.',
-			category: 'dinner',
+			categories: 'dinner',
 			ingredients: [
-				{ name: 'boneless chicken thighs', amount: 4, unit: '' },
-				{ name: 'garlic, minced', amount: 3, unit: 'cloves' },
-				{ name: 'lemon, juiced', amount: 1, unit: '' },
-				{ name: 'chicken stock', amount: 0.5, unit: 'cup' }
+				{
+					sectionName: 'For the chicken',
+					name: 'boneless chicken thighs',
+					amount: 4,
+					unit: ''
+				},
+				{
+					sectionName: 'For the chicken',
+					name: 'garlic, minced',
+					amount: 3,
+					unit: 'cloves'
+				},
+				{
+					sectionName: 'For the sauce',
+					name: 'lemon, juiced',
+					amount: 1,
+					unit: ''
+				},
+				{
+					sectionName: 'For the sauce',
+					name: 'chicken stock',
+					amount: 0.5,
+					unit: 'cup'
+				}
 			],
 			steps: [
-				'Season the chicken thighs with salt and pepper on both sides.',
-				'Sear in a hot skillet, 5 minutes per side, then set aside.',
-				'Add garlic to the pan and cook until fragrant, about 30 seconds.',
-				'Deglaze with lemon juice and stock, return chicken, and simmer 8 minutes.'
+				{
+					sectionName: 'Prep',
+					description:
+						'Season the chicken thighs with salt and pepper on both sides.'
+				},
+				{
+					sectionName: 'Cook',
+					description:
+						'Sear in a hot skillet, 5 minutes per side, then set aside.'
+				},
+				{
+					sectionName: 'Cook',
+					description:
+						'Add garlic to the pan and cook until fragrant, about 30 seconds.'
+				},
+				{
+					sectionName: 'Cook',
+					description:
+						'Deglaze with lemon juice and stock, return chicken, and simmer 8 minutes.'
+				}
 			],
 			prepTime: 10,
 			cookTime: 20,
 			servings: 4
 		} satisfies Omit<CreateRecipeModel, 'userId'>);
 	}
+
+	function fieldError(path) {
+		return form?.errors?.[path]?.[0];
+	}
+
+	$effect(() => {
+		console.log('form?.errors', form?.errors);
+	});
 </script>
 
 <div
@@ -126,11 +159,15 @@
 		</button>
 	</div>
 
-	{#if form?.errors}
+	{#if form?.rootErrors?.length}
 		<div
-			class="rounded-2xl bg-blush-100 px-4 py-3 text-sm text-blush-500 ring-1 ring-blush-300"
+			id="form-errors"
+			class="flex flex-col gap-1 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+			role="alert"
 		>
-			Please check the highlighted fields and try again.
+			{#each form.rootErrors as err}
+				<p>{err}</p>
+			{/each}
 		</div>
 	{/if}
 
@@ -181,7 +218,30 @@
 		</section>
 	{/if}
 
-	<form method="POST" action="?/post" class="flex w-full flex-col gap-6">
+	<form
+		method="POST"
+		action={recipeToEdit ? '?/patch' : '?/post'}
+		enctype="multipart/form-data"
+		class="flex w-full flex-col gap-6"
+		use:enhance={() => {
+			submitting = true;
+			return async ({ update }) => {
+				await update();
+				submitting = false;
+				if (
+					form?.rootErrors?.length ||
+					(form?.errors && Object.keys(form.errors).length)
+				) {
+					document
+						.getElementById('form-errors')
+						?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+				}
+			};
+		}}
+	>
+		{#if recipeToEdit}
+			<input type="hidden" name="recipeId" value={recipeToEdit.id} />
+		{/if}
 		<!-- Basics -->
 		<section
 			class="flex flex-col gap-5 rounded-3xl bg-white/70 p-6 shadow-sm ring-1 ring-ink/5"
@@ -201,6 +261,11 @@
 					bind:value={recipe.title}
 					class="rounded-xl border border-ink/10 bg-white px-3 py-2 text-sm text-ink focus:border-blush-500/50 focus:ring-2 focus:ring-blush-300/50 focus:outline-none"
 				/>
+				{#if fieldError('title')}
+					<span id="title-error" class="text-xs font-medium text-red-600"
+						>{fieldError('title')}</span
+					>
+				{/if}
 			</label>
 
 			<label
@@ -219,11 +284,39 @@
 
 			<div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
 				<label
-					for="category"
+					for="categories[]"
 					class="flex flex-col gap-1.5 text-sm font-medium text-ink"
 				>
 					Category
-					<select
+					<div class="flex items-center">
+						<input
+							id="default-checkbox"
+							type="checkbox"
+							name="categories[]"
+							value="dessert"
+							class="border-default-medium bg-neutral-secondary-medium focus:ring-brand-soft h-4 w-4 rounded-xs border focus:ring-2"
+						/>
+						<label
+							for="default-checkbox"
+							class="text-heading ms-2 text-sm font-medium select-none"
+							>Dessert</label
+						>
+					</div>
+					<div class="flex items-center">
+						<input
+							id="default-checkbox"
+							type="checkbox"
+							name="categories[]"
+							value="dinner"
+							class="border-default-medium bg-neutral-secondary-medium focus:ring-brand-soft h-4 w-4 rounded-xs border focus:ring-2"
+						/>
+						<label
+							for="default-checkbox"
+							class="text-heading ms-2 text-sm font-medium select-none"
+							>Dinner</label
+						>
+					</div>
+					<!-- <select
 						name="category"
 						id="category"
 						required
@@ -232,7 +325,7 @@
 					>
 						<option value="dinner">Dinner</option>
 						<option value="dessert">Dessert</option>
-					</select>
+					</select> -->
 				</label>
 
 				<div class="flex flex-col gap-1.5 text-sm font-medium text-ink">
@@ -269,93 +362,34 @@
 			<h2 class="font-display text-lg font-semibold text-ink">
 				Timing & yield
 			</h2>
-
-			<div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
-				<fieldset class="flex flex-col gap-2">
-					<legend class="mb-1 text-sm font-medium text-ink">Prep time</legend>
-					<div class="flex items-center gap-3">
-						<div class="flex items-center gap-1.5">
-							<label for="prepTime-h" class="sr-only">Prep time, hours</label>
-							<input
-								id="prepTime-h"
-								type="number"
-								min="0"
-								max="24"
-								value={Math.floor(recipe.prepTime / 60)}
-								oninput={(e) =>
-									updateHours('prepTime', Number(e.currentTarget.value) || 0)}
-								class="w-14 rounded-xl border border-ink/10 bg-white px-2 py-1.5 text-center text-sm text-ink focus:border-blush-500/50 focus:outline-none"
-							/>
-							<span class="text-xs text-ink-soft">h</span>
-						</div>
-						<div class="flex items-center gap-1.5">
-							<label for="prepTime-m" class="sr-only">Prep time, minutes</label>
-							<input
-								id="prepTime-m"
-								type="number"
-								min="0"
-								max="59"
-								value={recipe.prepTime % 60}
-								oninput={(e) =>
-									updateMinutes('prepTime', Number(e.currentTarget.value) || 0)}
-								class="w-14 rounded-xl border border-ink/10 bg-white px-2 py-1.5 text-center text-sm text-ink focus:border-blush-500/50 focus:outline-none"
-							/>
-							<span class="text-xs text-ink-soft">min</span>
-						</div>
-					</div>
-					<input type="hidden" name="prepTime" value={recipe.prepTime} />
-				</fieldset>
-
-				<fieldset class="flex flex-col gap-2">
-					<legend class="mb-1 text-sm font-medium text-ink">Cook time</legend>
-					<div class="flex items-center gap-3">
-						<div class="flex items-center gap-1.5">
-							<label for="cookTime-h" class="sr-only">Cook time, hours</label>
-							<input
-								id="cookTime-h"
-								type="number"
-								min="0"
-								max="24"
-								value={Math.floor(recipe.cookTime / 60)}
-								oninput={(e) =>
-									updateHours('cookTime', Number(e.currentTarget.value) || 0)}
-								class="w-14 rounded-xl border border-ink/10 bg-white px-2 py-1.5 text-center text-sm text-ink focus:border-blush-500/50 focus:outline-none"
-							/>
-							<span class="text-xs text-ink-soft">h</span>
-						</div>
-						<div class="flex items-center gap-1.5">
-							<label for="cookTime-m" class="sr-only">Cook time, minutes</label>
-							<input
-								id="cookTime-m"
-								type="number"
-								min="0"
-								max="59"
-								value={recipe.cookTime % 60}
-								oninput={(e) =>
-									updateMinutes('cookTime', Number(e.currentTarget.value) || 0)}
-								class="w-14 rounded-xl border border-ink/10 bg-white px-2 py-1.5 text-center text-sm text-ink focus:border-blush-500/50 focus:outline-none"
-							/>
-							<span class="text-xs text-ink-soft">min</span>
-						</div>
-					</div>
-					<input type="hidden" name="cookTime" value={recipe.cookTime} />
-				</fieldset>
-
-				<label
-					for="servings"
-					class="flex flex-col gap-1.5 text-sm font-medium text-ink"
-				>
-					Servings
-					<input
-						name="servings"
+			<div
+				class="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3"
+			>
+				<TimeStepper
+					legend="Prep time"
+					name="prepTime"
+					value={recipe.prepTime}
+					onchange={(v) => (recipe.prepTime = v)}
+				/>
+				<TimeStepper
+					legend="Cook time"
+					name="cookTime"
+					value={recipe.cookTime}
+					onchange={(v) => (recipe.cookTime = v)}
+				/>
+				<div class="flex flex-col items-start gap-2">
+					<span class="mb-1 text-sm font-medium text-ink">Servings</span>
+					<NumberStepper
 						id="servings"
-						type="number"
-						min="1"
-						required
-						bind:value={recipe.servings}
-						class="w-20 rounded-xl border border-ink/10 bg-white px-3 py-2 text-sm text-ink focus:border-blush-500/50 focus:ring-2 focus:ring-blush-300/50 focus:outline-none"
+						name="servings"
+						label="Servings"
+						value={recipe.servings}
+						min={1}
+						max={50}
+						suffix="ppl"
+						onchange={(v) => (recipe.servings = v)}
 					/>
-				</label>
+				</div>
 			</div>
 		</section>
 
@@ -372,7 +406,33 @@
 
 			<div class="flex flex-col gap-3">
 				{#each recipe.ingredients as _, idx ('ingredientIdx-' + idx)}
-					<div class="grid grid-cols-12 items-end gap-2">
+					{@const showSectionHeader =
+						idx === 0 ||
+						recipe.ingredients[idx - 1].sectionName !==
+							recipe.ingredients[idx].sectionName}
+					{#if showSectionHeader}
+						<div class="mt-2 flex items-center gap-2 first:mt-0">
+							<input
+								type="text"
+								placeholder="Section name (e.g. For the sauce)"
+								value={recipe.ingredients[idx].sectionName ?? ''}
+								oninput={(e) => {
+									const val = e.currentTarget.value;
+									recipe.ingredients[idx].sectionName = val || undefined;
+								}}
+								name="ingredients[{idx}].sectionName"
+								class="w-full border-b border-dashed border-ink/20 bg-transparent px-1 py-1 text-xs font-semibold tracking-wide text-ink-soft uppercase placeholder:font-normal placeholder:normal-case focus:border-blush-500/50 focus:outline-none"
+							/>
+						</div>
+					{:else}
+						<input
+							type="hidden"
+							name="ingredients[{idx}].sectionName"
+							value={recipe.ingredients[idx].sectionName ?? ''}
+						/>
+					{/if}
+
+					<div class="grid grid-cols-12 items-start gap-2">
 						<label
 							for="ingredient-name-{idx}"
 							class="col-span-6 flex flex-col gap-1 text-xs font-medium text-ink-soft sm:col-span-7"
@@ -382,27 +442,36 @@
 								name="ingredients[{idx}].name"
 								id="ingredient-name-{idx}"
 								type="text"
-								required
 								bind:value={recipe.ingredients[idx].name}
-								class="rounded-xl border border-ink/10 bg-white px-3 py-2 text-sm text-ink focus:border-blush-500/50 focus:outline-none"
+								aria-invalid={Boolean(fieldError(`ingredients.${idx}.name`))}
+								class="rounded-xl border bg-white px-3 py-2 text-sm text-ink focus:outline-none {fieldError(
+									`ingredients.${idx}.name`
+								)
+									? 'border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-200'
+									: 'border-ink/10 focus:border-blush-500/50'}"
 							/>
+							{#if fieldError(`ingredients.${idx}.name`)}
+								<span class="text-xs font-medium text-red-600"
+									>{fieldError(`ingredients.${idx}.name`)}</span
+								>
+							{/if}
 						</label>
-						<label
-							for="ingredient-amount-{idx}"
-							class="col-span-3 flex flex-col gap-1 text-xs font-medium text-ink-soft sm:col-span-2"
-						>
-							Amount
-							<input
-								name="ingredients[{idx}].amount"
+
+						<div class="col-span-3 flex min-w-0 flex-col gap-1 sm:col-span-2">
+							<span class="text-xs font-medium text-ink-soft">Amount</span>
+							<NumberStepper
 								id="ingredient-amount-{idx}"
-								type="number"
-								min="0"
-								step="0.25"
-								required
-								bind:value={recipe.ingredients[idx].amount}
-								class="rounded-xl border border-ink/10 bg-white px-2 py-2 text-sm text-ink focus:border-blush-500/50 focus:outline-none"
+								name="ingredients[{idx}].amount"
+								label="Amount"
+								value={recipe.ingredients[idx].amount}
+								min={0}
+								max={100}
+								step={0.25}
+								fullWidth
+								onchange={(v) => (recipe.ingredients[idx].amount = v)}
 							/>
-						</label>
+						</div>
+
 						<label
 							for="ingredient-unit-{idx}"
 							class="col-span-2 flex flex-col gap-1 text-xs font-medium text-ink-soft"
@@ -417,11 +486,12 @@
 								class="rounded-xl border border-ink/10 bg-white px-2 py-2 text-sm text-ink focus:border-blush-500/50 focus:outline-none"
 							/>
 						</label>
+
 						<button
 							type="button"
 							aria-label={`Remove ingredient ${idx + 1}`}
 							onclick={() => recipe.ingredients.splice(idx, 1)}
-							class="col-span-1 flex h-9 w-9 items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-blush-100 hover:text-blush-500"
+							class="col-span-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-blush-100 hover:text-blush-500"
 						>
 							✕
 						</button>
@@ -429,14 +499,40 @@
 				{/each}
 			</div>
 
-			<button
-				type="button"
-				onclick={() =>
-					recipe.ingredients.push({ name: '', amount: 1, unit: '' })}
-				class="self-start rounded-full border border-dashed border-ink/20 px-4 py-2 text-sm font-medium text-ink-soft transition-colors hover:border-mint-200 hover:bg-mint-200/30 hover:text-ink"
-			>
-				+ Add ingredient
-			</button>
+			{#if fieldError('ingredients')}
+				<p class="text-xs font-medium text-red-600">
+					{fieldError('ingredients')}
+				</p>
+			{/if}
+
+			<div class="flex gap-2">
+				<button
+					type="button"
+					onclick={() =>
+						recipe.ingredients.push({
+							name: '',
+							amount: 1,
+							unit: '',
+							sectionName: recipe.ingredients.at(-1)?.sectionName
+						})}
+					class="self-start rounded-full border border-dashed border-ink/20 px-4 py-2 text-sm font-medium text-ink-soft transition-colors hover:border-mint-200 hover:bg-mint-200/30 hover:text-ink"
+				>
+					+ Add ingredient
+				</button>
+				<button
+					type="button"
+					onclick={() =>
+						recipe.ingredients.push({
+							name: '',
+							amount: 1,
+							unit: '',
+							sectionName: 'New section'
+						})}
+					class="self-start rounded-full border border-dashed border-ink/20 px-4 py-2 text-sm font-medium text-ink-soft transition-colors hover:border-mint-200 hover:bg-mint-200/30 hover:text-ink"
+				>
+					+ Add section
+				</button>
+			</div>
 		</section>
 
 		<!-- Steps -->
@@ -447,42 +543,126 @@
 
 			<div class="flex flex-col gap-3">
 				{#each recipe.steps as _, idx (idx + '-stepIdx')}
-					<div class="flex gap-3">
-						<span
-							class="mt-1.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-butter-300 font-display text-sm font-semibold text-ink"
-						>
-							{idx + 1}
-						</span>
-						<label for="step-{idx}" class="sr-only">Step {idx + 1}</label>
-						<textarea
-							name="steps[]"
-							id="step-{idx}"
-							rows="2"
-							required
-							bind:value={recipe.steps[idx]}
-							class="flex-1 rounded-xl border border-ink/10 bg-white px-3 py-2 text-sm text-ink focus:border-blush-500/50 focus:outline-none"
-						></textarea>
-						<button
-							type="button"
-							aria-label={`Remove step ${idx + 1}`}
-							onclick={() => recipe.steps.splice(idx, 1)}
-							class="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-blush-100 hover:text-blush-500"
-						>
-							✕
-						</button>
+					{@const showSectionHeader =
+						idx === 0 ||
+						recipe.steps[idx - 1].sectionName !== recipe.steps[idx].sectionName}
+					{#if showSectionHeader}
+						<div class="mt-3 flex items-center gap-2 first:mt-0">
+							<input
+								type="text"
+								placeholder="Section name (e.g. Make the sauce)"
+								value={recipe.steps[idx].sectionName ?? ''}
+								oninput={(e) => {
+									const val = e.currentTarget.value;
+									recipe.steps[idx].sectionName = val || undefined;
+								}}
+								name="steps[{idx}].sectionName"
+								class="w-full border-b border-dashed border-ink/20 bg-transparent px-1 py-1 text-xs font-semibold tracking-wide text-ink-soft uppercase placeholder:font-normal placeholder:normal-case focus:border-blush-500/50 focus:outline-none"
+							/>
+						</div>
+					{:else}
+						<input
+							type="hidden"
+							name="steps[{idx}].sectionName"
+							value={recipe.steps[idx].sectionName ?? ''}
+						/>
+					{/if}
+
+					<div class="flex flex-col gap-1">
+						<div class="flex gap-3">
+							<span
+								class="mt-1.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-butter-300 font-display text-sm font-semibold text-ink"
+							>
+								{idx + 1}
+							</span>
+							<label for="step-{idx}" class="sr-only">Step {idx + 1}</label>
+							<textarea
+								name="steps[{idx}].description"
+								id="step-{idx}"
+								rows="2"
+								bind:value={recipe.steps[idx].description}
+								aria-invalid={Boolean(fieldError(`steps.${idx}.description`))}
+								class="flex-1 rounded-xl border bg-white px-3 py-2 text-sm text-ink focus:outline-none {fieldError(
+									`steps.${idx}.description`
+								)
+									? 'border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-200'
+									: 'border-ink/10 focus:border-blush-500/50'}"
+							></textarea>
+							<button
+								type="button"
+								aria-label={`Remove step ${idx + 1}`}
+								onclick={() => recipe.steps.splice(idx, 1)}
+								class="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-blush-100 hover:text-blush-500"
+							>
+								✕
+							</button>
+						</div>
+						{#if fieldError(`steps.${idx}.description`)}
+							<span class="ml-10 text-xs font-medium text-red-600"
+								>{fieldError(`steps.${idx}.description`)}</span
+							>
+						{/if}
 					</div>
 				{/each}
 			</div>
 
-			<button
-				type="button"
-				onclick={() => recipe.steps.push('')}
-				class="self-start rounded-full border border-dashed border-ink/20 px-4 py-2 text-sm font-medium text-ink-soft transition-colors hover:border-mint-200 hover:bg-mint-200/30 hover:text-ink"
-			>
-				+ Add step
-			</button>
-		</section>
+			{#if fieldError('steps')}
+				<p class="text-xs font-medium text-red-600">{fieldError('steps')}</p>
+			{/if}
 
+			<div class="flex gap-2">
+				<button
+					type="button"
+					onclick={() =>
+						recipe.steps.push({
+							description: '',
+							sectionName: recipe.steps.at(-1)?.sectionName
+						})}
+					class="self-start rounded-full border border-dashed border-ink/20 px-4 py-2 text-sm font-medium text-ink-soft transition-colors hover:border-mint-200 hover:bg-mint-200/30 hover:text-ink"
+				>
+					+ Add step
+				</button>
+				<button
+					type="button"
+					onclick={() =>
+						recipe.steps.push({ description: '', sectionName: 'New section' })}
+					class="self-start rounded-full border border-dashed border-ink/20 px-4 py-2 text-sm font-medium text-ink-soft transition-colors hover:border-mint-200 hover:bg-mint-200/30 hover:text-ink"
+				>
+					+ Add section
+				</button>
+			</div>
+		</section>
+		<section
+			class="flex flex-col gap-4 rounded-3xl bg-white/70 p-6 shadow-sm ring-1 ring-ink/5"
+		>
+			<div>
+				<h2 class="font-display text-lg font-semibold text-ink">Notes</h2>
+				<p class="text-xs text-ink-soft">
+					Optional — tips, substitutions, or things to remember next time.
+				</p>
+			</div>
+
+			<label for="notes" class="sr-only">Notes</label>
+			<textarea
+				name="notes"
+				id="notes"
+				rows="3"
+				bind:value={recipe.notes}
+				placeholder="e.g. Swap chicken thighs for breasts if you prefer leaner meat."
+				aria-invalid={Boolean(fieldError('notes'))}
+				aria-describedby={fieldError('notes') ? 'notes-error' : undefined}
+				class="rounded-xl border bg-white px-3 py-2 text-sm text-ink focus:outline-none {fieldError(
+					'notes'
+				)
+					? 'border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-200'
+					: 'border-ink/10 focus:border-blush-500/50 focus:ring-2 focus:ring-blush-300/50'}"
+			></textarea>
+			{#if fieldError('notes')}
+				<span id="notes-error" class="text-xs font-medium text-red-600"
+					>{fieldError('notes')}</span
+				>
+			{/if}
+		</section>
 		<!-- Actions -->
 		<div
 			class="fixed inset-x-0 bottom-0 z-20 flex justify-center border-t border-ink/10 bg-cream/90 px-4 py-4 backdrop-blur-md"
@@ -490,17 +670,56 @@
 			<div class="flex w-full max-w-3xl items-center justify-end gap-3">
 				<a
 					href={recipeToEdit ? `/recipe/${recipeToEdit.id}` : '/'}
-					class="rounded-full px-4 py-2 text-sm font-medium text-ink-soft transition-colors hover:bg-blush-100"
+					aria-disabled={submitting}
+					class="rounded-full px-4 py-2 text-sm font-medium text-ink-soft transition-colors hover:bg-blush-100 {submitting
+						? 'pointer-events-none opacity-50'
+						: ''}"
 				>
 					Cancel
 				</a>
 				<button
 					type="submit"
-					class="rounded-full bg-ink px-6 py-2.5 text-sm font-semibold text-cream shadow-sm transition-transform hover:-translate-y-0.5"
+					disabled={submitting}
+					class="flex items-center gap-2 rounded-full bg-ink px-6 py-2.5 text-sm font-semibold text-cream shadow-sm transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
 				>
-					{recipeToEdit ? 'Save changes' : 'Add recipe'}
+					{#if submitting}
+						<svg
+							class="h-4 w-4 animate-spin text-cream"
+							viewBox="0 0 24 24"
+							fill="none"
+						>
+							<circle
+								class="opacity-25"
+								cx="12"
+								cy="12"
+								r="10"
+								stroke="currentColor"
+								stroke-width="4"
+							/>
+							<path
+								class="opacity-75"
+								fill="currentColor"
+								d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+							/>
+						</svg>
+						Saving…
+					{:else}
+						{recipeToEdit ? 'Save changes' : 'Add recipe'}
+					{/if}
 				</button>
 			</div>
 		</div>
 	</form>
 </div>
+
+<style>
+	.no-spinner::-webkit-inner-spin-button,
+	.no-spinner::-webkit-outer-spin-button {
+		-webkit-appearance: none;
+		margin: 0;
+	}
+	.no-spinner {
+		-moz-appearance: textfield;
+		appearance: textfield;
+	}
+</style>

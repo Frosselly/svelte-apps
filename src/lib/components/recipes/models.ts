@@ -7,7 +7,8 @@ import {
 
 import {
 	CreateRecipeSchema,
-	RecipePagingRequestSchema
+	RecipePagingSchema,
+	UpdateRecipeSchema
 } from './recipeValidation';
 
 export interface Ingredient {
@@ -16,12 +17,10 @@ export interface Ingredient {
 	unit: string;
 }
 
-export type RecipePagingRequest = v.InferOutput<
-	typeof RecipePagingRequestSchema
->;
+export type RecipePagingRequest = v.InferOutput<typeof RecipePagingSchema>;
 
 export type CreateRecipeModel = v.InferOutput<typeof CreateRecipeSchema>;
-export type UpdateRecipeModel = Partial<CreateRecipeModel>;
+export type UpdateRecipeModel = v.InferOutput<typeof UpdateRecipeSchema>;
 
 export interface PagingResponse {
 	page: number;
@@ -33,6 +32,8 @@ export interface PagingResponse {
 export type Recipe = typeof recipeDBSchema.$inferSelect & {
 	ingredients: Ingredient[];
 	steps: string[];
+	categories: string[];
+	author: { username: string };
 };
 
 // export interface CreateRecipeModel {

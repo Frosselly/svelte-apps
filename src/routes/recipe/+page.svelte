@@ -3,14 +3,15 @@
 
 	import RecentlyViewed from '$lib/components/recipes/RecentlyViewed.svelte';
 	import RecipeSearch from '$lib/components/recipes/RecipeSearch.svelte';
-	import type { Category, SortOption } from '$lib/types.js';
+	import type { SortOption } from '$lib/types.js';
 
 	const { data } = $props();
 
 	const recipes = $derived(data.recipes ?? []);
+	const categories = $derived([{ name: 'all' }, ...data.categories]);
 
 	let query = $state('');
-	let category = $state<Category>('all');
+	let selectedCategory = $state('all');
 	let sort = $state<SortOption>('newest');
 
 	const filteredRecipes = $derived.by(() => {
@@ -21,7 +22,8 @@
 				q.length === 0 ||
 				r.title.toLowerCase().includes(q) ||
 				r.description?.toLowerCase().includes(q);
-			const matchesCategory = category === 'all' || r.category === category;
+			const matchesCategory =
+				selectedCategory === 'all' || r.selectedCategory === selectedCategory;
 			return matchesQuery && matchesCategory;
 		});
 
@@ -52,7 +54,7 @@
 		</div>
 
 		<div class="relative z-10 -mt-8 w-full px-4">
-			<RecipeSearch bind:query bind:category bind:sort />
+			<RecipeSearch bind:query bind:selectedCategory bind:sort {categories} />
 		</div>
 	</section>
 
@@ -80,7 +82,7 @@
 				>
 					<p class="font-display text-xl text-ink">No recipes match yet</p>
 					<p class="text-sm text-ink-soft">
-						Try a different search or category.
+						Try a different search or selectedCategory.
 					</p>
 				</div>
 			{/if}

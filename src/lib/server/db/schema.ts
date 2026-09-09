@@ -27,10 +27,13 @@ export const recipes = table('recipes', {
 		.primaryKey()
 		.$defaultFn(() => crypto.randomUUID()),
 	title: t.text().notNull(),
-	description: t.text().notNull(),
-	category: t.text({ enum: ['dessert', 'dinner'] }),
-	createdAt: t.integer('created_at', { mode: 'timestamp' }),
-	updatedAt: t.integer('updated_at', { mode: 'timestamp' }),
+	description: t.text(),
+	createdAt: t
+		.integer('created_at', { mode: 'timestamp' })
+		.$defaultFn(() => new Date()),
+	updatedAt: t
+		.integer('updated_at', { mode: 'timestamp' })
+		.$defaultFn(() => new Date()),
 	cookTime: t.integer('cook_time').notNull(),
 	prepTime: t.integer('prep_time').notNull(),
 	servings: t.integer('servings').notNull(),
@@ -44,12 +47,15 @@ export const recipeIngredients = table('recipe_ingredients', {
 		.text()
 		.primaryKey()
 		.$defaultFn(() => crypto.randomUUID()),
-	recipeId: t.text('recipe_id').references((): AnySQLiteColumn => recipes.id),
+	recipeId: t
+		.text('recipe_id')
+		.references((): AnySQLiteColumn => recipes.id, { onDelete: 'cascade' }),
 	ingredientId: t
 		.text('ingredient_id')
 		.references((): AnySQLiteColumn => ingredients.id),
+	sectionName: t.text('section_name'),
 	amount: t.integer().notNull(),
-	unit: t.text().notNull()
+	unit: t.text()
 });
 
 export const recipeCategories = table('recipe_categories', {
@@ -57,7 +63,9 @@ export const recipeCategories = table('recipe_categories', {
 		.text()
 		.primaryKey()
 		.$defaultFn(() => crypto.randomUUID()),
-	recipeId: t.text('recipe_id').references((): AnySQLiteColumn => recipes.id),
+	recipeId: t
+		.text('recipe_id')
+		.references((): AnySQLiteColumn => recipes.id, { onDelete: 'cascade' }),
 	categoryId: t
 		.text('category_id')
 		.references((): AnySQLiteColumn => categories.id)
@@ -68,7 +76,7 @@ export const ingredients = table('ingredients', {
 		.text()
 		.primaryKey()
 		.$defaultFn(() => crypto.randomUUID()),
-	name: t.text().notNull()
+	name: t.text().notNull().unique()
 });
 
 export const steps = table('steps', {
@@ -76,9 +84,12 @@ export const steps = table('steps', {
 		.text()
 		.primaryKey()
 		.$defaultFn(() => crypto.randomUUID()),
+	sectionName: t.text('section_name'),
 	stepNr: t.int(),
 	description: t.text(),
-	recipeId: t.text('recipe_id').references((): AnySQLiteColumn => recipes.id)
+	recipeId: t
+		.text('recipe_id')
+		.references((): AnySQLiteColumn => recipes.id, { onDelete: 'cascade' })
 });
 
 export const categories = table('categories', {
@@ -87,11 +98,9 @@ export const categories = table('categories', {
 		.primaryKey()
 		.$defaultFn(() => crypto.randomUUID()),
 	name: t.text({ length: 50 }).notNull().unique(),
-	createdBy: t
-		.text('created_by')
-		.references((): AnySQLiteColumn => users.id)
-		.notNull(),
-	createdAt: t.integer('created_at', { mode: 'timestamp' }).notNull()
+	createdAt: t
+		.integer('created_at', { mode: 'timestamp' })
+		.$defaultFn(() => new Date())
 });
 
 //a user has many recipes
