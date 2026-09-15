@@ -66,7 +66,7 @@ export async function getRecipe(recipeId: string) {
 				with: { ingredient: true },
 				orderBy: { sectionName: 'asc' }
 			},
-			steps: { orderBy: [{ sectionName: 'asc' }, { stepNr: 'asc' }] },
+			steps: { orderBy: { sectionName: 'asc', stepNr: 'asc' } },
 			author: true,
 			categories: true
 		}

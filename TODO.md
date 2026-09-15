@@ -6,11 +6,11 @@ Have working Create and edit forms with a searchable recipe list
 
 - [ ] Add parsing code from doc files
 - [ ] Add parsing code from urls
-- [ ] Create a recipe home page
-- [ ] Style the form page more nicely
-- [ ] Create recipe page
+- [x] Create a recipe home page
+- [x] Style the form page more nicely
+- [x] Create recipe page
 - [ ] Change so form inputs would accept rich text instead of regular
-- [ ] Look and add curvy font family
+- [x] Look and add curvy font family
 
 - [ ] Create a multipurpose header (can be used for different projects (like: tasks, recipes, e-commerce))
 - [ ] Create a multipurpose sidebar
@@ -26,8 +26,8 @@ user: adbat
 
 - [x] Adding notes
 - [ ] Making text boxes _rich text_
-- [ ] Ingredient subsections
-- [ ] Steps subsections
+- [x] Ingredient subsections
+- [x] Steps subsections
 
 - [ ] Fix width issues for amount steppers
 - [ ] Fix height issues when an error appears inside ingredient inputs
@@ -45,5 +45,5 @@ user: adbat
 - [ ] Refactoring
 - [x] Updating a recipe (currently form calls only '/post' should change it to '/patch' or check url params)
 
-- [ ] Ingredient subsections
-- [ ] Steps subsections
+- [x] Ingredient subsections
+- [x] Steps subsections

@@ -50,6 +50,7 @@ function parseRecipeFormData(formData: FormData, userid: string) {
 		sectionName?: string;
 		description: string;
 	}[] = [];
+
 	for (let i = 0; ; i++) {
 		const descRaw = formData.get(`steps[${i}].description`);
 		if (descRaw === null) break;

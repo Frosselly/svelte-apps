@@ -23,6 +23,13 @@
 	function scaledAmount(amount: number) {
 		return Number((amount * scale).toFixed(2)).toString();
 	}
+	function stepNumber(groupIdx: number, itemIdx: number) {
+		let count = 0;
+		for (let g = 0; g < groupIdx; g++) {
+			count += recipe.steps[g].items.length;
+		}
+		return count + itemIdx + 1;
+	}
 </script>
 
 <main class="mx-auto flex w-full max-w-5xl flex-col gap-10 bg-cream px-4 py-10">
@@ -211,34 +218,60 @@
 				/>
 			</div>
 		</div>
-		<ul class="flex flex-col divide-y divide-ink/5">
-			{#each recipe.ingredients as ing, idx (idx + '-ing')}
-				<li class="flex items-center gap-3 py-2.5 text-sm text-ink">
-					<span class="w-24 shrink-0 font-semibold text-ink-soft">
-						{scaledAmount(ing.amount)}{ing.unit ? ` ${ing.unit}` : ''}
-					</span>
-					<span>{ing.name}</span>
-				</li>
+
+		<div class="flex flex-col gap-5">
+			{#each recipe.ingredients as group (group.sectionName)}
+				<div class="flex flex-col gap-1">
+					{#if group.sectionName}
+						<h3
+							class="font-display text-sm font-semibold tracking-wide text-blush-500 uppercase"
+						>
+							{group.sectionName}
+						</h3>
+					{/if}
+					<ul class="flex flex-col divide-y divide-ink/5">
+						{#each group.items as ing, idx (idx + '-ing')}
+							<li class="flex items-center gap-3 py-2.5 text-sm text-ink">
+								<span class="w-24 shrink-0 font-semibold text-ink-soft">
+									{scaledAmount(ing.amount)}{ing.unit ? ` ${ing.unit}` : ''}
+								</span>
+								<span>{ing.name}</span>
+							</li>
+						{/each}
+					</ul>
+				</div>
 			{/each}
-		</ul>
+		</div>
 	</section>
 
 	<!-- Instructions -->
-	<section class="flex flex-col gap-4">
+	<section class="flex flex-col gap-6">
 		<h2 class="font-display text-2xl font-semibold text-ink">Instructions</h2>
-		<ol class="flex flex-col gap-3">
-			{#each recipe.steps as step, idx (idx + '-step')}
-				<li
-					class="flex gap-4 rounded-2xl bg-white/70 p-4 shadow-sm ring-1 ring-ink/5"
-				>
-					<span
-						class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-butter-300 font-display text-sm font-semibold text-ink"
-					>
-						{idx + 1}
-					</span>
-					<p class="text-sm leading-relaxed text-ink-soft">{step}</p>
-				</li>
-			{/each}
-		</ol>
+
+		{#each recipe.steps as group, groupIdx (group.sectionName ?? groupIdx)}
+			<div class="flex flex-col gap-3">
+				{#if group.sectionName}
+					<h3 class="font-display text-lg font-semibold text-ink">
+						{group.sectionName}
+					</h3>
+				{/if}
+				<ol class="flex flex-col gap-3">
+					{#each group.items as step, idx (idx + '-step')}
+						<li
+							class="flex gap-4 rounded-2xl bg-white/70 p-4 shadow-sm ring-1 ring-ink/5"
+						>
+							<span
+								class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-butter-300 font-display text-sm font-semibold text-ink"
+							>
+								{stepNumber(groupIdx, idx)}
+							</span>
+							<p class="text-sm leading-relaxed text-ink-soft">
+								{step.description}
+							</p>
+						</li>
+					{/each}
+				</ol>
+			</div>
+		{/each}
 	</section>
 </main>
