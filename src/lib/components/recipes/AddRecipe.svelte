@@ -5,6 +5,7 @@
 	import TimeStepper from './TimeStepper.svelte';
 	import NumberStepper from './NumberStepper.svelte';
 	import type { PageProps } from '../../../routes/recipe/manage/$types';
+	import { goto } from '$app/navigation';
 
 	type PropsType = Partial<PageProps> & {
 		recipeToEdit?: Recipe;
@@ -26,12 +27,17 @@
 		notes: ''
 	};
 
-	let recipe = $state(structuredClone(recipeToEdit ?? recipeDefault));
+	let loadedRecipeId = $state(recipeToEdit?.id);
+	let recipe = $state(toFormRecipe(recipeToEdit));
 
 	$effect(() => {
-		recipe = structuredClone(recipeToEdit ?? recipeDefault);
-		newImagePreview = null;
+		if (recipeToEdit?.id !== loadedRecipeId) {
+			recipe = toFormRecipe(recipeToEdit);
+			loadedRecipeId = recipeToEdit?.id;
+			newImagePreview = null;
+		}
 	});
+	console.log('structuredClone', recipe);
 
 	let newImagePreview: string | null = $state(null);
 	const imagePreview = $derived(
@@ -136,6 +142,36 @@
 	$effect(() => {
 		console.log('form?.errors', form?.errors);
 	});
+	function flattenGroups<T extends { sectionName?: string }>(
+		groups: { sectionName?: string; items: T[] }[] | undefined
+	): T[] {
+		if (!groups) return [];
+		return groups.flatMap((group) =>
+			group.items.map((item) => ({
+				...item,
+				sectionName: item.sectionName ?? group.sectionName
+			}))
+		);
+	}
+
+	function toFormRecipe(
+		source: Recipe | undefined
+	): Omit<CreateRecipeModel, 'userId'> {
+		if (!source) return structuredClone(recipeDefault);
+		return {
+			title: source.title ?? '',
+			description: source.description ?? '',
+			categories: source.categories ?? [],
+			notes: source.notes ?? '',
+			prepTime: source.prepTime ?? 0,
+			cookTime: source.cookTime ?? 0,
+			servings: source.servings ?? 1,
+			ingredients: flattenGroups(source.ingredients as any) ?? [
+				{ name: '', amount: 1, unit: '' }
+			],
+			steps: flattenGroups(source.steps as any) ?? [{ description: '' }]
+		};
+	}
 </script>
 
 <div
@@ -225,8 +261,13 @@
 		class="flex w-full flex-col gap-6"
 		use:enhance={() => {
 			submitting = true;
-			return async ({ update }) => {
-				await update();
+			return async ({ result, update }) => {
+				if (result.type === 'success') {
+					const recipeId = recipeToEdit?.id ?? result.data?.recipeId;
+					await goto(recipeId ? `/recipe/${recipeId}` : '/recipe');
+					return; // navigating away — no need to touch local state further
+				}
+				await update({ invalidateAll: false });
 				submitting = false;
 				if (
 					form?.rootErrors?.length ||
@@ -290,31 +331,45 @@
 					Category
 					<div class="flex items-center">
 						<input
-							id="default-checkbox"
+							id="category-dessert"
 							type="checkbox"
 							name="categories[]"
 							value="dessert"
+							checked={recipe.categories.includes('dessert')}
+							onchange={(e) => {
+								recipe.categories = e.currentTarget.checked
+									? [...recipe.categories, 'dessert']
+									: recipe.categories.filter((c) => c !== 'dessert');
+							}}
 							class="border-default-medium bg-neutral-secondary-medium focus:ring-brand-soft h-4 w-4 rounded-xs border focus:ring-2"
 						/>
 						<label
-							for="default-checkbox"
+							for="category-dessert"
 							class="text-heading ms-2 text-sm font-medium select-none"
-							>Dessert</label
 						>
+							Dessert
+						</label>
 					</div>
 					<div class="flex items-center">
 						<input
-							id="default-checkbox"
+							id="category-dinner"
 							type="checkbox"
 							name="categories[]"
 							value="dinner"
+							checked={recipe.categories.includes('dinner')}
+							onchange={(e) => {
+								recipe.categories = e.currentTarget.checked
+									? [...recipe.categories, 'dinner']
+									: recipe.categories.filter((c) => c !== 'dinner');
+							}}
 							class="border-default-medium bg-neutral-secondary-medium focus:ring-brand-soft h-4 w-4 rounded-xs border focus:ring-2"
 						/>
 						<label
-							for="default-checkbox"
+							for="category-dinner"
 							class="text-heading ms-2 text-sm font-medium select-none"
-							>Dinner</label
 						>
+							Dinner
+						</label>
 					</div>
 					<!-- <select
 						name="category"
@@ -389,6 +444,11 @@
 						suffix="ppl"
 						onchange={(v) => (recipe.servings = v)}
 					/>
+					{#if fieldError('servings')}
+						<span class="text-xs font-medium text-red-600"
+							>{fieldError('servings')}</span
+						>
+					{/if}
 				</div>
 			</div>
 		</section>
@@ -487,14 +547,20 @@
 							/>
 						</label>
 
-						<button
-							type="button"
-							aria-label={`Remove ingredient ${idx + 1}`}
-							onclick={() => recipe.ingredients.splice(idx, 1)}
-							class="col-span-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-blush-100 hover:text-blush-500"
-						>
-							✕
-						</button>
+						<div class="col-span-1 flex flex-col gap-1">
+							<span
+								aria-hidden="true"
+								class="text-xs font-medium text-transparent select-none">·</span
+							>
+							<button
+								type="button"
+								aria-label={`Remove ingredient ${idx + 1}`}
+								onclick={() => recipe.ingredients.splice(idx, 1)}
+								class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-blush-100 hover:text-blush-500"
+							>
+								✕
+							</button>
+						</div>
 					</div>
 				{/each}
 			</div>
@@ -569,7 +635,7 @@
 					{/if}
 
 					<div class="flex flex-col gap-1">
-						<div class="flex gap-3">
+						<div class="flex items-start gap-3">
 							<span
 								class="mt-1.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-butter-300 font-display text-sm font-semibold text-ink"
 							>
@@ -592,7 +658,7 @@
 								type="button"
 								aria-label={`Remove step ${idx + 1}`}
 								onclick={() => recipe.steps.splice(idx, 1)}
-								class="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-blush-100 hover:text-blush-500"
+								class="mt-1 flex h-8 w-8 shrink-0 items-center justify-center self-start rounded-full text-ink-soft transition-colors hover:bg-blush-100 hover:text-blush-500"
 							>
 								✕
 							</button>

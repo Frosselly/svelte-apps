@@ -176,12 +176,20 @@ export const actions: Actions = {
 			return fail(400, { message: 'Missing recipeId' });
 		}
 
-		const rawData = parseRecipeFormData(formData, userid);
+		const { rawData, ingredientIndexMap, stepIndexMap } = parseRecipeFormData(
+			formData,
+			userid
+		);
 		const result = v.safeParse(UpdateRecipeSchema, rawData);
 		if (!result.success) {
 			const flattened = v.flatten(result.issues);
+			const remappedErrors = remapIndices(
+				flattened.nested ?? {},
+				ingredientIndexMap,
+				stepIndexMap
+			);
 			return fail(400, {
-				errors: flattened.nested ?? {},
+				errors: remappedErrors,
 				rootErrors: flattened.root ?? [],
 				data: rawData
 			});
