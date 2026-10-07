@@ -2,18 +2,30 @@ import {
 	deleteRecipe,
 	getRecipe
 } from '$lib/components/recipes/sevices/recipeQueries';
-import { fail, redirect, type Actions } from '@sveltejs/kit';
+import { fail, redirect, type Actions, error } from '@sveltejs/kit';
 import type { PageServerLoad } from '../$types';
 import { me } from '$lib/server/auth';
-import { findRecipe } from '$lib/components/recipes/repositories/recipe.repository';
 
 export const load: PageServerLoad = async ({ params }) => {
 	if (!params.slug) {
-		throw new Error('No slug provided');
+		error(400, 'No slug provided'); // Native 400 Bad Request
 	}
+
 	const recipe = await getRecipe(params.slug);
-	console.log('recici', recipe);
-	return { recipe };
+	console.log('recipe:', recipe);
+
+	// If the recipe wasn't found in the database (null or undefined)
+	if (!recipe) {
+		error(404, {
+			message: 'Recipe not found'
+		});
+	}
+
+	// Double-check: If recipe is an ORM class instance (e.g., Prisma/Mongoose),
+	// ensure it's converted to a POJO using structuredClone or a custom mapper
+	return {
+		recipe: structuredClone(recipe)
+	};
 };
 
 // [slug]/+page.server.ts

@@ -12,3 +12,31 @@
 // 		// todos: db.getTodos(id)
 // 	};
 // }
+import type { HandleServerError } from '@sveltejs/kit';
+
+class NotFound extends Error {}
+
+export const handleError: HandleServerError = ({ kind, error }) => {
+	if (kind === 'unknown') {
+		if (error instanceof NotFound) {
+			return {
+				status: 404,
+				message: 'Not found'
+			};
+		}
+
+		return { message: 'Something went wrong' };
+	}
+
+	if (kind === 'app') {
+		return error;
+	}
+
+	const errorId = crypto.randomUUID();
+
+	if (kind === 'framework') {
+		return { ...error, errorId };
+	}
+
+	return error;
+};
