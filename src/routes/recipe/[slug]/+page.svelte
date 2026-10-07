@@ -23,6 +23,7 @@
 	function scaledAmount(amount: number) {
 		return Number((amount * scale).toFixed(2)).toString();
 	}
+
 	function stepNumber(groupIdx: number, itemIdx: number) {
 		let count = 0;
 		for (let g = 0; g < groupIdx; g++) {
@@ -64,7 +65,8 @@
 				<button
 					type="submit"
 					class="rounded-full border border-blush-500/50 bg-blush-100 px-4 py-1.5 text-xs font-semibold text-blush-500 transition-colors hover:bg-blush-300 hover:text-ink"
-					>Delete recipe</button
+				>Delete recipe
+				</button
 				>
 			</form>
 		</div>
@@ -266,7 +268,7 @@
 								{stepNumber(groupIdx, idx)}
 							</span>
 							<p class="text-sm leading-relaxed text-ink-soft">
-								{step.description}
+								{@html step.description}
 							</p>
 						</li>
 					{/each}

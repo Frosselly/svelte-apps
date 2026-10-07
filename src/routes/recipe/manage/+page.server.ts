@@ -8,6 +8,7 @@ import * as v from 'valibot';
 import { me } from '$lib/server/auth';
 import { docToRecipe } from '$lib/components/recipe-parser/fromDoc';
 import type { Recipe } from '$lib/components/recipes/models';
+import DOMPurify from 'isomorphic-dompurify';
 import {
 	getRecipe,
 	insertRecipeWithIngredients,
@@ -57,10 +58,19 @@ function parseRecipeFormData(formData: FormData, userid: string) {
 		rawSteps.push({
 			originalIndex: i,
 			sectionName: normalizeSection(formData.get(`steps[${i}].sectionName`)),
-			description: String(descRaw).trim()
+			//Sanitize description generated with Quill
+			description: DOMPurify.sanitize(String(descRaw).trim())
 		});
 	}
-	const keptSteps = rawSteps.filter((s) => s.description !== '');
+	const keptSteps = rawSteps.filter((s) => {
+		if (!s.description) return false;
+
+		// Strip out all HTML tags (like <p>, <br>, </p>) using a fast regex
+		const plainText = s.description.replace(/<[^>]*>/g, '').trim();
+
+		// Only keep the step if it contains actual words or characters
+		return plainText !== '';
+	});
 
 	return {
 		rawData: {

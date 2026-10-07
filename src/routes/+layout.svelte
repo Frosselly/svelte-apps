@@ -20,21 +20,23 @@
 	});
 </script>
 
-<svelte:head><link rel="icon" href={favicon} /></svelte:head>
+<svelte:head>
+	<link rel="icon" href={favicon} />
+</svelte:head>
 <header
 	class="sticky top-0 z-20 flex w-full items-center justify-between border-b border-ink/5 bg-cream/80 px-6 py-4 backdrop-blur-md"
 >
 	<div class="flex gap-6">
 		{#each linksSidebar.projects as link, i (i)}
 			<a class="font-display text-xl font-semibold text-ink" href={link.href}
-				>{link.name}</a
+			>{link.name}</a
 			>
 		{/each}
 	</div>
 	{#if page.url.pathname.includes('recipe')}
 		<a href="/recipe/manage"
 			 class="flex justify-center items-center gap-2 rounded-full bg-ink px-5 py-2.5 font-sans text-sm font-semibold text-cream shadow-sm transition-transform hover:-translate-y-0.5">
-			<span class="">+</span>
+
 			<span>New recipe</span>
 		</a>
 	{/if}

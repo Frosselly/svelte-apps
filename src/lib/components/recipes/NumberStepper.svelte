@@ -12,7 +12,8 @@
 		fullWidth = false,
 		variant = 'default', // 'default' | 'pill'
 		size = 'md', // 'sm' | 'md'
-		onchange = () => {}
+		onchange = () => {
+		}
 	} = $props();
 
 	function set(next) {
@@ -34,11 +35,11 @@
 	const buttonStyles = {
 		default:
 			'text-ink-soft hover:bg-blush-50 hover:text-blush-600 active:bg-blush-100',
-		pill: 'text-ink-soft hover:bg-blush-200 hover:text-blush-700 active:bg-blush-300'
+		pill: 'text-ink-soft hover:bg-blush-300 hover:text-blush-700 active:bg-blush-300'
 	};
 
 	const buttonSize = {
-		sm: 'h-7 w-6',
+		sm: 'h-9 w-6',
 		md: 'h-9 w-8'
 	};
 
@@ -89,7 +90,7 @@
 	/>
 	{#if suffix}
 		<span class="w-6 shrink-0 pr-1 text-center text-xs text-ink-soft"
-			>{suffix}</span
+		>{suffix}</span
 		>
 	{/if}
 
@@ -112,13 +113,14 @@
 </div>
 
 <style>
-	.no-spinner::-webkit-inner-spin-button,
-	.no-spinner::-webkit-outer-spin-button {
-		-webkit-appearance: none;
-		margin: 0;
-	}
-	.no-spinner {
-		-moz-appearance: textfield;
-		appearance: textfield;
-	}
+    .no-spinner::-webkit-inner-spin-button,
+    .no-spinner::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    .no-spinner {
+        -moz-appearance: textfield;
+        appearance: textfield;
+    }
 </style>

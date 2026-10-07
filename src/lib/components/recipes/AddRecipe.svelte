@@ -6,6 +6,7 @@
 	import NumberStepper from './NumberStepper.svelte';
 	import type { PageProps } from '../../../routes/recipe/manage/$types';
 	import { goto } from '$app/navigation';
+	import Editor from '$lib/components/recipes/Editor.svelte';
 
 	type PropsType = Partial<PageProps> & {
 		recipeToEdit?: Recipe;
@@ -71,6 +72,7 @@
 	}
 
 	let importUrl = $state('');
+
 	async function handleURLSubmit(event: SubmitEvent) {
 		event.preventDefault();
 		// TODO: wire up to a real ?/parseUrl action, same shape as handleFileSelect.
@@ -142,6 +144,7 @@
 	$effect(() => {
 		console.log('form?.errors', form?.errors);
 	});
+
 	function flattenGroups<T extends { sectionName?: string }>(
 		groups: { sectionName?: string; items: T[] }[] | undefined
 	): T[] {
@@ -172,8 +175,8 @@
 			steps: flattenGroups(source.steps as any) ?? [{ description: '' }]
 		};
 	}
-</script>
 
+</script>
 <div
 	class="mx-auto flex w-full max-w-3xl flex-col gap-8 bg-cream px-4 py-10 pb-28"
 >
@@ -227,12 +230,13 @@
 					/>
 				</label>
 
+
 				<form
 					onsubmit={handleURLSubmit}
 					class="flex flex-col justify-center gap-2 rounded-2xl border border-ink/15 px-4 py-4"
 				>
 					<label for="url-import" class="text-sm font-medium text-ink"
-						>From a URL</label
+					>From a URL</label
 					>
 					<div class="flex gap-2">
 						<input
@@ -304,7 +308,7 @@
 				/>
 				{#if fieldError('title')}
 					<span id="title-error" class="text-xs font-medium text-red-600"
-						>{fieldError('title')}</span
+					>{fieldError('title')}</span
 					>
 				{/if}
 			</label>
@@ -446,7 +450,7 @@
 					/>
 					{#if fieldError('servings')}
 						<span class="text-xs font-medium text-red-600"
-							>{fieldError('servings')}</span
+						>{fieldError('servings')}</span
 						>
 					{/if}
 				</div>
@@ -469,7 +473,7 @@
 					{@const showSectionHeader =
 						idx === 0 ||
 						recipe.ingredients[idx - 1].sectionName !==
-							recipe.ingredients[idx].sectionName}
+						recipe.ingredients[idx].sectionName}
 					{#if showSectionHeader}
 						<div class="mt-2 flex items-center gap-2 first:mt-0">
 							<input
@@ -512,7 +516,7 @@
 							/>
 							{#if fieldError(`ingredients.${idx}.name`)}
 								<span class="text-xs font-medium text-red-600"
-									>{fieldError(`ingredients.${idx}.name`)}</span
+								>{fieldError(`ingredients.${idx}.name`)}</span
 								>
 							{/if}
 						</label>
@@ -642,18 +646,12 @@
 								{idx + 1}
 							</span>
 							<label for="step-{idx}" class="sr-only">Step {idx + 1}</label>
-							<textarea
-								name="steps[{idx}].description"
+							<Editor
 								id="step-{idx}"
-								rows="2"
+								name="steps[{idx}].description"
 								bind:value={recipe.steps[idx].description}
-								aria-invalid={Boolean(fieldError(`steps.${idx}.description`))}
-								class="flex-1 rounded-xl border bg-white px-3 py-2 text-sm text-ink focus:outline-none {fieldError(
-									`steps.${idx}.description`
-								)
-									? 'border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-200'
-									: 'border-ink/10 focus:border-blush-500/50'}"
-							></textarea>
+								isInvalid={Boolean(fieldError(`steps.${idx}.description`))}
+							/>
 							<button
 								type="button"
 								aria-label={`Remove step ${idx + 1}`}
@@ -665,7 +663,7 @@
 						</div>
 						{#if fieldError(`steps.${idx}.description`)}
 							<span class="ml-10 text-xs font-medium text-red-600"
-								>{fieldError(`steps.${idx}.description`)}</span
+							>{fieldError(`steps.${idx}.description`)}</span
 							>
 						{/if}
 					</div>
@@ -725,7 +723,7 @@
 			></textarea>
 			{#if fieldError('notes')}
 				<span id="notes-error" class="text-xs font-medium text-red-600"
-					>{fieldError('notes')}</span
+				>{fieldError('notes')}</span
 				>
 			{/if}
 		</section>
@@ -779,13 +777,14 @@
 </div>
 
 <style>
-	.no-spinner::-webkit-inner-spin-button,
-	.no-spinner::-webkit-outer-spin-button {
-		-webkit-appearance: none;
-		margin: 0;
-	}
-	.no-spinner {
-		-moz-appearance: textfield;
-		appearance: textfield;
-	}
+    .no-spinner::-webkit-inner-spin-button,
+    .no-spinner::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    .no-spinner {
+        -moz-appearance: textfield;
+        appearance: textfield;
+    }
 </style>
