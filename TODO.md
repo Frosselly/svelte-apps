@@ -17,7 +17,7 @@ user: adbat
 
 - [ ] Making text boxes _rich text_
 
-- [ ] Fix width issues for amount steppers _before changing to mobile becomes too small_
+- [x] Fix width issues for amount steppers _before changing to mobile becomes too small_
 - [ ] Fix height issues when an error appears inside ingredient inputs
 
 - [ ] Routing on errors
