@@ -20,11 +20,12 @@ user: adbat
 - [ ] Routing on errors
 - [ ] Routing on adding a recipe or updating and deleting
 - [ ] front end validation for ingredients and steps (currently it checks in the backend only)
+- [ ] Doc preview card un-closable (Mobile)
 
 - [x] Header fix in mobile view
-- [ ] Filters adjustment
+- [x] Filters adjustment
 - [x] Add recipe form adjustment to phone screens
-- [ ] Doc preview card un-closable (Mobile)
+- [x] Add categories ability
 
 ### Back
 

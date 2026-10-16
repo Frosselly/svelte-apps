@@ -15,6 +15,7 @@ import {
 	updateRecipe
 } from '$lib/components/recipes/sevices/recipeQueries';
 import type { PageServerLoad } from './$types';
+import { getCategories } from '$lib/components/recipes/sevices/categoryQueries';
 
 function normalizeSection(raw: FormDataEntryValue | null): string | undefined {
 	if (raw === null) return undefined;
@@ -129,6 +130,7 @@ export const load: PageServerLoad = async ({ url }) => {
 		console.log('rce serve', data.recipeToEdit);
 		data.editId = editId;
 	}
+	data.categories = await getCategories();
 
 	return data;
 };

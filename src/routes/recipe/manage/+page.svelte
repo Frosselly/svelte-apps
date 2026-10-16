@@ -23,7 +23,12 @@
 
 <main class="flex flex-col gap-8 lg:flex-row lg:gap-12">
 	<section class="w-full max-w-full">
-		<AddRecipe bind:docFile {recipeToEdit} {form} />
+		<AddRecipe
+			bind:docFile
+			{recipeToEdit}
+			{form}
+			categories={data.categories}
+		/>
 	</section>
 
 	<!-- Desktop side-by-side preview -->

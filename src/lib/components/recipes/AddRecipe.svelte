@@ -7,19 +7,30 @@
 	import type { PageProps } from '../../../routes/recipe/manage/$types';
 	import { goto } from '$app/navigation';
 	import Editor from '$lib/components/recipes/Editor.svelte';
+	import { SvelteSet } from 'svelte/reactivity';
 
 	type PropsType = Partial<PageProps> & {
 		recipeToEdit?: Recipe;
 		docFile: File | undefined;
+		categories: {
+			name: string;
+			id: string;
+			createdAt: Date | null;
+		}[];
 	};
 
-	let { form, docFile = $bindable(), recipeToEdit }: PropsType = $props();
+	let {
+		form,
+		docFile = $bindable(),
+		recipeToEdit,
+		categories
+	}: PropsType = $props();
 	let submitting = $state(false);
 
 	const recipeDefault: Omit<CreateRecipeModel, 'userId'> = {
 		title: '',
 		description: '',
-		categories: ['dinner'],
+		categories: [''],
 		ingredients: [{ name: '', amount: 1, unit: '' }],
 		steps: [{ description: '' }], // was ['']
 		prepTime: 0,
@@ -30,12 +41,15 @@
 
 	let loadedRecipeId = $state(recipeToEdit?.id);
 	let recipe = $state(toFormRecipe(recipeToEdit));
+	let selectedCategories = $state(new SvelteSet(recipeToEdit?.categories));
+	let categoryInput = $state('');
 
 	$effect(() => {
 		if (recipeToEdit?.id !== loadedRecipeId) {
 			recipe = toFormRecipe(recipeToEdit);
 			loadedRecipeId = recipeToEdit?.id;
 			newImagePreview = null;
+			selectedCategories = new SvelteSet(recipeToEdit?.categories);
 		}
 	});
 	console.log('structuredClone', recipe);
@@ -82,7 +96,7 @@
 		recipe = structuredClone({
 			title: 'Skillet Lemon Garlic Chicken',
 			description: 'Weeknight chicken thighs in a bright, garlicky pan sauce.',
-			categories: 'dinner',
+			categories: ['dinner'],
 			ingredients: [
 				{
 					sectionName: 'For the chicken',
@@ -175,8 +189,8 @@
 			steps: flattenGroups(source.steps as any) ?? [{ description: '' }]
 		};
 	}
-
 </script>
+
 <div
 	class="mx-auto flex w-full max-w-3xl flex-col gap-8 bg-cream px-4 py-10 pb-28"
 >
@@ -230,13 +244,12 @@
 					/>
 				</label>
 
-
 				<form
 					onsubmit={handleURLSubmit}
 					class="flex flex-col justify-center gap-2 rounded-2xl border border-ink/15 px-4 py-4"
 				>
 					<label for="url-import" class="text-sm font-medium text-ink"
-					>From a URL</label
+						>From a URL</label
 					>
 					<div class="flex gap-2">
 						<input
@@ -308,7 +321,7 @@
 				/>
 				{#if fieldError('title')}
 					<span id="title-error" class="text-xs font-medium text-red-600"
-					>{fieldError('title')}</span
+						>{fieldError('title')}</span
 					>
 				{/if}
 			</label>
@@ -332,59 +345,39 @@
 					for="categories[]"
 					class="flex flex-col gap-1.5 text-sm font-medium text-ink"
 				>
-					Category
-					<div class="flex items-center">
-						<input
-							id="category-dessert"
-							type="checkbox"
-							name="categories[]"
-							value="dessert"
-							checked={recipe.categories.includes('dessert')}
-							onchange={(e) => {
-								recipe.categories = e.currentTarget.checked
-									? [...recipe.categories, 'dessert']
-									: recipe.categories.filter((c) => c !== 'dessert');
-							}}
-							class="border-default-medium bg-neutral-secondary-medium focus:ring-brand-soft h-4 w-4 rounded-xs border focus:ring-2"
-						/>
-						<label
-							for="category-dessert"
-							class="text-heading ms-2 text-sm font-medium select-none"
-						>
-							Dessert
-						</label>
+					Add to categories
+					<input
+						bind:value={categoryInput}
+						type="search"
+						list="category-options"
+						placeholder="Search or create categories..."
+						onkeydown={(e) => {
+							if (e.key === 'Enter') {
+								e.preventDefault();
+								selectedCategories.add(categoryInput);
+							}
+						}}
+					/>
+					<datalist id="category-options">
+						{#each categories as category (category.id)}
+							<option value={category.name}></option>
+						{/each}
+					</datalist>
+
+					<div class="flex flex-col gap-1.5">
+						{#each selectedCategories as category (category)}
+							<input type="hidden" name="categories[]" value={category} />
+							<div
+								class={'flex w-full justify-between rounded-xl bg-blush-300 pl-4 '}
+							>
+								<span class="py-2">{category}</span>
+								<button
+									class="h-full w-12 rounded-xl py-2 transition-colors ease-in-out hover:bg-blush-500"
+									onclick={() => selectedCategories.delete(category)}>-</button
+								>
+							</div>
+						{/each}
 					</div>
-					<div class="flex items-center">
-						<input
-							id="category-dinner"
-							type="checkbox"
-							name="categories[]"
-							value="dinner"
-							checked={recipe.categories.includes('dinner')}
-							onchange={(e) => {
-								recipe.categories = e.currentTarget.checked
-									? [...recipe.categories, 'dinner']
-									: recipe.categories.filter((c) => c !== 'dinner');
-							}}
-							class="border-default-medium bg-neutral-secondary-medium focus:ring-brand-soft h-4 w-4 rounded-xs border focus:ring-2"
-						/>
-						<label
-							for="category-dinner"
-							class="text-heading ms-2 text-sm font-medium select-none"
-						>
-							Dinner
-						</label>
-					</div>
-					<!-- <select
-						name="category"
-						id="category"
-						required
-						bind:value={recipe.category}
-						class="rounded-xl border border-ink/10 bg-white px-3 py-2 text-sm text-ink focus:border-blush-500/50 focus:ring-2 focus:ring-blush-300/50 focus:outline-none"
-					>
-						<option value="dinner">Dinner</option>
-						<option value="dessert">Dessert</option>
-					</select> -->
 				</label>
 
 				<div class="flex flex-col gap-1.5 text-sm font-medium text-ink">
@@ -450,7 +443,7 @@
 					/>
 					{#if fieldError('servings')}
 						<span class="text-xs font-medium text-red-600"
-						>{fieldError('servings')}</span
+							>{fieldError('servings')}</span
 						>
 					{/if}
 				</div>
@@ -473,7 +466,7 @@
 					{@const showSectionHeader =
 						idx === 0 ||
 						recipe.ingredients[idx - 1].sectionName !==
-						recipe.ingredients[idx].sectionName}
+							recipe.ingredients[idx].sectionName}
 					{#if showSectionHeader}
 						<div class="mt-2 flex items-center gap-2 first:mt-0">
 							<input
@@ -516,7 +509,7 @@
 							/>
 							{#if fieldError(`ingredients.${idx}.name`)}
 								<span class="text-xs font-medium text-red-600"
-								>{fieldError(`ingredients.${idx}.name`)}</span
+									>{fieldError(`ingredients.${idx}.name`)}</span
 								>
 							{/if}
 						</label>
@@ -663,7 +656,7 @@
 						</div>
 						{#if fieldError(`steps.${idx}.description`)}
 							<span class="ml-10 text-xs font-medium text-red-600"
-							>{fieldError(`steps.${idx}.description`)}</span
+								>{fieldError(`steps.${idx}.description`)}</span
 							>
 						{/if}
 					</div>
@@ -723,7 +716,7 @@
 			></textarea>
 			{#if fieldError('notes')}
 				<span id="notes-error" class="text-xs font-medium text-red-600"
-				>{fieldError('notes')}</span
+					>{fieldError('notes')}</span
 				>
 			{/if}
 		</section>
@@ -777,14 +770,14 @@
 </div>
 
 <style>
-    .no-spinner::-webkit-inner-spin-button,
-    .no-spinner::-webkit-outer-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-    }
+	.no-spinner::-webkit-inner-spin-button,
+	.no-spinner::-webkit-outer-spin-button {
+		-webkit-appearance: none;
+		margin: 0;
+	}
 
-    .no-spinner {
-        -moz-appearance: textfield;
-        appearance: textfield;
-    }
+	.no-spinner {
+		-moz-appearance: textfield;
+		appearance: textfield;
+	}
 </style>
