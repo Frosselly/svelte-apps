@@ -4,14 +4,15 @@
 	import RecentlyViewed from '$lib/components/recipes/RecentlyViewed.svelte';
 	import RecipeSearch from '$lib/components/recipes/RecipeSearch.svelte';
 	import type { SortOption } from '$lib/types.js';
+	import type { Recipe } from '$lib/components/recipes/models.js';
 
 	const { data } = $props();
 
-	const recipes = $derived(data.recipes ?? []);
-	const categories = $derived([{ name: 'all' }, ...data.categories]);
+	const recipes: Recipe[] = $derived(data.recipes ?? []);
+	const categories = $derived(data.categories);
 
 	let query = $state('');
-	let selectedCategory = $state('all');
+	let selectedCategories: string[] = $state([]);
 	let sort = $state<SortOption>('newest');
 
 	const filteredRecipes = $derived.by(() => {
@@ -23,7 +24,9 @@
 				r.title.toLowerCase().includes(q) ||
 				r.description?.toLowerCase().includes(q);
 			const matchesCategory =
-				selectedCategory === 'all' || r.selectedCategory === selectedCategory;
+				selectedCategories.length <= 0
+					? true
+					: r.categories.some((c) => selectedCategories.includes(c));
 			return matchesQuery && matchesCategory;
 		});
 
@@ -54,7 +57,7 @@
 		</div>
 
 		<div class="relative z-10 -mt-8 w-full px-4">
-			<RecipeSearch bind:query bind:selectedCategory bind:sort {categories} />
+			<RecipeSearch bind:query bind:selectedCategories bind:sort {categories} />
 		</div>
 	</section>
 

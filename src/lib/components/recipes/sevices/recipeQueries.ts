@@ -6,13 +6,14 @@ import type {
 	UpdateRecipeModel
 } from '../models';
 import {
+	categories,
 	recipeCategories,
 	recipeIngredients,
 	recipes,
 	steps,
 	users
 } from '$lib/server/db/schema';
-import { recipeSortingKeys } from '../recipeValidation';
+import { type RecipeSortingKey } from '../recipeValidation';
 import { createRecipe, findRecipe } from '../repositories/recipe.repository';
 
 import { findOrCreateIngredients } from '../repositories/ingredient.repository';
@@ -23,37 +24,46 @@ import { assignStepNumbers } from '../repositories/steps.repository';
 // GET /recipe?searchParams
 export async function getRecipes(params?: RecipePagingRequest) {
 	console.log('called with: ', params);
-	if (!params)
-		return await db
-			.select({
-				...getColumns(recipes),
-				authorName: users.username,
-				authorId: users.id
-			})
-			.from(recipes)
-			.leftJoin(users, eq(recipes.userid, users.id));
+	if (!params) {
+		return await db.query.recipes.findMany({
+			with: {
+				author: true,
+				categories: {
+					columns: {
+						name: true
+					}
+				}
+			}
+		});
+	}
 
 	if (!params.sort) params.sort = [];
-	const preparedSorting = params.sort.map((s) => {
-		const direction = s.startsWith('-') ? desc : asc;
-		const field = s.slice(1);
+	const preparedSorting = params.sort.reduce<
+		Partial<Record<RecipeSortingKey, 'asc' | 'desc'>>
+	>((result, sort) => {
+		const descending = sort.startsWith('-');
+		const field = sort.slice(1) as RecipeSortingKey;
 
-		return direction(field as (typeof recipeSortingKeys)[number]);
+		result[field] = descending ? 'desc' : 'asc';
+		return result;
+	}, {});
+
+	const res = await db.query.recipes.findMany({
+		where: {
+			title: { like: `%${params.q}%` }
+		},
+		with: {
+			author: true,
+			categories: {
+				columns: {
+					name: true
+				}
+			}
+		},
+		orderBy: preparedSorting,
+		offset: params.offset,
+		limit: params.pageSize
 	});
-
-	const res = await db
-		.select({
-			...getColumns(recipes),
-			authorName: users.username,
-			authorId: users.id
-		})
-		.from(recipes)
-		.where(like(recipes.title, `%${params.q}%`))
-		.leftJoin(users, eq(recipes.userid, users.id))
-		.orderBy(...preparedSorting)
-		.offset(params.offset)
-		.limit(params.pageSize);
-	console.log('res: ', res);
 	return res;
 }
 

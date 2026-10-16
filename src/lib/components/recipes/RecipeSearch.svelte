@@ -3,12 +3,12 @@
 
 	let {
 		query = $bindable(''),
-		selectedCategory = $bindable('all'),
+		selectedCategories = $bindable([]),
 		categories,
 		sort = $bindable('newest')
 	}: {
 		query?: string;
-		selectedCategory?: string;
+		selectedCategories?: string[];
 		categories: {
 			id?: string;
 			createdAt?: Date | null;
@@ -77,14 +77,19 @@
 			class="flex flex-wrap items-center gap-2 rounded-2xl bg-white p-3 ring-1 ring-ink/5"
 		>
 			<span class="mr-1 text-xs font-medium text-ink-soft"
-				>selectedCategory</span
+				>Select categories</span
 			>
 			{#each categories as c (c.name)}
 				<button
 					type="button"
-					onclick={() => (selectedCategory = c.name)}
+					onclick={() =>
+						selectedCategories.includes(c.name)
+							? (selectedCategories = selectedCategories.filter(
+									(el) => el != c.name
+								))
+							: selectedCategories.push(c.name)}
 					class={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-						selectedCategory === c.name
+						selectedCategories.includes(c.name)
 							? 'bg-ink text-cream'
 							: 'bg-blush-100 text-ink-soft hover:bg-blush-300'
 					}`}

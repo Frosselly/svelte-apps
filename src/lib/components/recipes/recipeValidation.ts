@@ -74,12 +74,14 @@ export const UpdateRecipeSchema = v.partial(CreateRecipeSchema);
 
 export type StepInput = v.InferOutput<typeof StepSchema>;
 
-export const recipeSortingKeys = [
+const recipeSortingKeys = [
 	'title',
 	'description',
 	'cookTime',
 	'prepTime'
 ] as const satisfies readonly (keyof CreateRecipe)[];
+
+export type RecipeSortingKey = (typeof recipeSortingKeys)[number];
 
 export const RecipePagingSchema = v.object({
 	q: v.optional(v.pipe(v.string(), v.trim())),
