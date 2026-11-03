@@ -4,7 +4,7 @@ Have working Create and edit forms with a searchable recipe list
 
 - [ ] Add parsing code from doc files
 - [ ] Add parsing code from urls
-- [ ] Change so form inputs would accept rich text instead of regular
+- [x] Change so form inputs would accept rich text instead of regular
 
 - [ ] Create a multipurpose header (can be used for different projects (like: tasks, recipes, e-commerce))
 - [ ] Create a multipurpose sidebar
