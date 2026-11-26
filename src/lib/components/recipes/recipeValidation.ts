@@ -1,5 +1,11 @@
 import * as v from 'valibot';
 
+const ImageFile = v.pipe(
+	v.instance(File),
+	v.mimeType(['image/jpeg', 'image/png']),
+	v.maxSize(1024 * 1024 * 10, 'Image must be less than 10MB')
+);
+
 export const IngredientSchema = v.object({
 	sectionName: v.optional(
 		v.pipe(v.string(), v.minLength(1, 'Name is required'))
@@ -12,7 +18,8 @@ export const StepSchema = v.object({
 	sectionName: v.optional(
 		v.pipe(v.string(), v.minLength(1, 'Name is required'))
 	),
-	description: v.pipe(v.string(), v.nonEmpty())
+	description: v.pipe(v.string(), v.nonEmpty()),
+	stepImages: v.optional(v.pipe(v.array(ImageFile)))
 });
 
 export const CreateRecipeSchema = v.object({
@@ -59,13 +66,7 @@ export const CreateRecipeSchema = v.object({
 		v.minLength(1, 'At least one step is required')
 	),
 	userId: v.pipe(v.string(), v.trim(), v.minLength(1, 'User ID is required')),
-	image: v.optional(
-		v.pipe(
-			v.instance(File),
-			v.mimeType(['image/jpeg', 'image/png']),
-			v.maxSize(1024 * 1024 * 10, 'Image must be less than 10MB')
-		)
-	)
+	image: v.optional(ImageFile)
 });
 
 type CreateRecipe = v.InferOutput<typeof CreateRecipeSchema>;

@@ -1,16 +1,6 @@
-import { sql } from 'drizzle-orm';
 import { sqliteTable as table } from 'drizzle-orm/sqlite-core';
 import * as t from 'drizzle-orm/sqlite-core';
 import type { AnySQLiteColumn } from 'drizzle-orm/sqlite-core';
-
-export const task = table('task', {
-	id: t
-		.text('id')
-		.primaryKey()
-		.$defaultFn(() => crypto.randomUUID()),
-	title: t.text('title').notNull(),
-	priority: t.integer('priority').notNull().default(1)
-});
 
 export const users = table('users', {
 	id: t
@@ -90,6 +80,18 @@ export const steps = table('steps', {
 	recipeId: t
 		.text('recipe_id')
 		.references((): AnySQLiteColumn => recipes.id, { onDelete: 'cascade' })
+});
+
+export const stepImages = table('step_images', {
+	id: t
+		.text()
+		.primaryKey()
+		.$defaultFn(() => crypto.randomUUID()),
+	imageUrl: t.text('image_url').notNull(),
+	stepId: t
+		.text('step_id')
+		.notNull()
+		.references((): AnySQLiteColumn => steps.id, { onDelete: 'cascade' })
 });
 
 export const categories = table('categories', {

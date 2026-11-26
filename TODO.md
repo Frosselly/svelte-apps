@@ -1,13 +1,11 @@
 # Recipe site
 
-Have working Create and edit forms with a searchable recipe list
+- [ ] ability to add images to steps
 
 - [ ] Add parsing code from doc files
 - [ ] Add parsing code from urls
-- [x] Change so form inputs would accept rich text instead of regular
 
-- [ ] Create a multipurpose header (can be used for different projects (like: tasks, recipes, e-commerce))
-- [ ] Create a multipurpose sidebar
+- [ ] Create a multipurpose sidebar (maybe)
 
 user: adbat
 
@@ -22,13 +20,13 @@ user: adbat
 - [ ] front end validation for ingredients and steps (currently it checks in the backend only)
 - [ ] Doc preview card un-closable (Mobile)
 
-- [x] Header fix in mobile view
-- [x] Filters adjustment
-- [x] Add recipe form adjustment to phone screens
-- [x] Add categories ability
-
 ### Back
 
 - [ ] Add import from doc working logic
-
 - [ ] Refactoring
+
+### Issues
+
+- Author is still not displayed on recipes in minimal view
+- recipe data is printed in console
+-

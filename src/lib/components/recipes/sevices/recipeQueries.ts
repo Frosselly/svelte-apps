@@ -10,6 +10,7 @@ import {
 	recipeCategories,
 	recipeIngredients,
 	recipes,
+	stepImages,
 	steps,
 	users
 } from '$lib/server/db/schema';
@@ -117,6 +118,7 @@ export async function getRecipe(recipeId: string) {
 }
 
 // CREATE /recipe {body}
+
 export async function insertRecipeWithIngredients(
 	data: CreateRecipeModel,
 	imageFile?: File
@@ -132,13 +134,35 @@ export async function insertRecipeWithIngredients(
 		).map((ingredient) => ({ ...ingredient, recipeId }));
 		await tx.insert(recipeIngredients).values(ingredientRows);
 
+		// TODO: add step image handling
+		// insert stepImages using tx.insert(stepImages)
+		// const stepImageUrl saveImage(stepImageFile, recipeId)
+		// format: {stepId, imageUrl: stepImageUrl}
 		const stepRows = assignStepNumbers(data.steps).map((s) => ({
 			id: crypto.randomUUID(),
 			recipeId,
 			sectionName: s.sectionName,
 			stepNr: s.stepNr,
-			description: s.description
+			description: s.description,
+			stepImages: s.stepImages
 		}));
+		const stepImageRows = await Promise.all(
+			stepRows.map(async (s) => {
+				if (!s.stepImages) return [];
+
+				const imagePromises = s.stepImages?.map(async (img) => {
+					const stepImageUrl = await saveImage(img, recipeId);
+					return {
+						stepId: s.id,
+						imageUrl: stepImageUrl
+					};
+				});
+
+				return Promise.all(imagePromises);
+			})
+		);
+		const flatStepImageRows = stepImageRows.flat();
+		await tx.insert(stepImages).values(flatStepImageRows);
 		await tx.insert(steps).values(stepRows);
 
 		if (data.categories && data.categories.length > 0) {
@@ -203,6 +227,7 @@ export async function updateRecipe(
 			}));
 			await tx.insert(steps).values(stepRows);
 		}
+		//TODO: update step images and delete old ones?
 
 		await tx
 			.delete(recipeCategories)
@@ -236,6 +261,8 @@ export async function deleteRecipe(recipeId: string) {
 		const tx = rawTx as unknown as typeof db;
 		await tx.delete(recipes).where(eq(recipes.id, recipeId));
 	});
+
+	//TODO: delete step images
 
 	if (recipe.imageUrl) {
 		await deleteImageFile(recipe.imageUrl).catch((err) =>
