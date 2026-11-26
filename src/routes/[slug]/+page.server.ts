@@ -1,10 +1,7 @@
-import {
-	deleteRecipe,
-	getRecipe
-} from '$lib/components/recipes/sevices/recipeQueries';
 import { fail, redirect, type Actions, error } from '@sveltejs/kit';
 import type { PageServerLoad } from '../$types';
 import { me } from '$lib/server/auth';
+import { deleteRecipe, getRecipe } from '$lib/server/services/recipeQueries';
 
 export const load: PageServerLoad = async ({ params }) => {
 	if (!params.slug) {

@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { deserialize, enhance } from '$app/forms';
 	import type { ActionResult } from '@sveltejs/kit';
-	import type { CreateRecipeModel, Recipe } from './models';
 	import TimeStepper from './TimeStepper.svelte';
 	import NumberStepper from './NumberStepper.svelte';
 	import type { PageProps } from '../../../routes/recipe/manage/$types';
 	import { goto } from '$app/navigation';
 	import Editor from '$lib/components/recipes/Editor.svelte';
 	import { SvelteSet } from 'svelte/reactivity';
+	import type { CreateRecipeModel, Recipe } from '$lib/schemas/models';
 
 	type PropsType = Partial<PageProps> & {
 		recipeToEdit?: Recipe;

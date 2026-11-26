@@ -1,26 +1,24 @@
-import { db, type DbClient } from '$lib/server/db';
-import { asc, desc, eq, getColumns, like } from 'drizzle-orm';
+import { db } from '$lib/server/db';
+import { eq } from 'drizzle-orm';
 import type {
 	CreateRecipeModel,
 	RecipePagingRequest,
 	UpdateRecipeModel
-} from '../models';
+} from '$lib/schemas/models';
 import {
-	categories,
 	recipeCategories,
 	recipeIngredients,
 	recipes,
 	stepImages,
-	steps,
-	users
+	steps
 } from '$lib/server/db/schema';
-import { type RecipeSortingKey } from '../recipeValidation';
 import { createRecipe, findRecipe } from '../repositories/recipe.repository';
 
 import { findOrCreateIngredients } from '../repositories/ingredient.repository';
 import { findOrCreateCategories } from '../repositories/category.repository';
 import { deleteImageFile, saveImage } from './image.service';
 import { assignStepNumbers } from '../repositories/steps.repository';
+import type { RecipeSortingKey } from '$lib/schemas/recipe';
 
 // GET /recipe?searchParams
 export async function getRecipes(params?: RecipePagingRequest) {
