@@ -8,6 +8,7 @@ import {
 import {
 	CreateRecipeSchema,
 	RecipePagingSchema,
+	StepSchema,
 	UpdateRecipeSchema
 } from './recipeValidation';
 
@@ -21,6 +22,7 @@ export type RecipePagingRequest = v.InferOutput<typeof RecipePagingSchema>;
 
 export type CreateRecipeModel = v.InferOutput<typeof CreateRecipeSchema>;
 export type UpdateRecipeModel = v.InferOutput<typeof UpdateRecipeSchema>;
+export type StepModel = v.InferOutput<typeof StepSchema>;
 
 export interface PagingResponse {
 	page: number;

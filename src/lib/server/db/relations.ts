@@ -35,5 +35,11 @@ export const relations = defineRelations(schema, (r) => ({
 			from: r.categories.id.through(r.recipeCategories.categoryId),
 			to: r.recipes.id.through(r.recipeCategories.recipeId)
 		})
+	},
+	steps: {
+		step_images: r.many.stepImages({
+			from: r.steps.id.through(r.stepImages.stepId),
+			to: r.stepImages.id.through(r.stepImages.id)
+		})
 	}
 }));
