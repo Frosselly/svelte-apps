@@ -1,6 +1,7 @@
+import type { StepModel } from '$lib/schemas/models';
 import type { DbClient } from '$lib/server/db';
 import { stepImages, steps } from '$lib/server/db/schema';
-import type { StepModel } from '../models';
+import { eq } from 'drizzle-orm';
 import { assignStepNumbers } from '../repositories/steps.repository';
 import { saveImage } from './image.service';
 

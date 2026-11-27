@@ -4,7 +4,7 @@
 	import RecentlyViewed from '$lib/components/recipes/RecentlyViewed.svelte';
 	import RecipeSearch from '$lib/components/recipes/RecipeSearch.svelte';
 	import type { SortOption } from '$lib/types.js';
-	import type { Recipe } from '$lib/components/recipes/models.js';
+	import type { Recipe } from '$lib/schemas/models.js';
 
 	const { data } = $props();
 
