@@ -1,21 +1,15 @@
-import { fail, json, type Actions } from '@sveltejs/kit';
-import {
-	CreateRecipeSchema,
-	RecipePagingSchema,
-	UpdateRecipeSchema
-} from '$lib/components/recipes/recipeValidation';
+import { fail, type Actions } from '@sveltejs/kit';
 import * as v from 'valibot';
 import { me } from '$lib/server/auth';
-import { docToRecipe } from '$lib/components/recipe-parser/fromDoc';
-import type { Recipe } from '$lib/components/recipes/models';
 import DOMPurify from 'isomorphic-dompurify';
+import type { PageServerLoad } from './$types';
 import {
 	getRecipe,
 	insertRecipeWithIngredients,
 	updateRecipe
-} from '$lib/components/recipes/sevices/recipeQueries';
-import type { PageServerLoad } from './$types';
-import { getCategories } from '$lib/components/recipes/sevices/categoryQueries';
+} from '$lib/server/services/recipeQueries';
+import { getCategories } from '$lib/server/services/categoryQueries';
+import { CreateRecipeSchema, UpdateRecipeSchema } from '$lib/schemas/recipe';
 
 function normalizeSection(raw: FormDataEntryValue | null): string | undefined {
 	if (raw === null) return undefined;

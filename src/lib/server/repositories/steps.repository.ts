@@ -1,7 +1,7 @@
+import type { StepInput } from '$lib/schemas/recipe';
 import type { DbClient } from '$lib/server/db';
 import { steps } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
-import type { StepInput } from '../recipeValidation';
 
 export async function findSteps(db: DbClient, recipeId: string) {
 	return db

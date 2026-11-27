@@ -1,6 +1,6 @@
-import type { CreateRecipeModel, Ingredient } from '../recipes/models';
 import * as cheerio from 'cheerio';
 import { docToHTML } from './docParser';
+import type { CreateRecipeModel, Ingredient } from '$lib/schemas/models';
 
 export async function docToRecipe(file: File) {
 	const html = await docToHTML(file);

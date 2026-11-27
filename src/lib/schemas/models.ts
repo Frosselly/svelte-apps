@@ -10,7 +10,7 @@ import {
 	RecipePagingSchema,
 	StepSchema,
 	UpdateRecipeSchema
-} from './recipeValidation';
+} from './recipe';
 
 export interface Ingredient {
 	name: string;

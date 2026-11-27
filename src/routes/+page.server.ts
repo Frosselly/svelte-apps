@@ -1,15 +1,8 @@
-import { fail, json } from '@sveltejs/kit';
-import type { Actions, PageServerLoad } from '../todo/$types';
-import {
-	CreateRecipeSchema,
-	RecipePagingSchema
-} from '$lib/components/recipes/recipeValidation';
 import * as v from 'valibot';
-import { me } from '$lib/server/auth';
-import { docToRecipe } from '$lib/components/recipe-parser/fromDoc';
-import type { Recipe } from '$lib/components/recipes/models';
-import { getRecipes } from '$lib/components/recipes/sevices/recipeQueries';
-import { getCategories } from '$lib/components/recipes/sevices/categoryQueries';
+import type { PageServerLoad } from './$types';
+import { RecipePagingSchema } from '$lib/schemas/recipe';
+import { getRecipes } from '$lib/server/services/recipeQueries';
+import { getCategories } from '$lib/server/services/categoryQueries';
 
 export const load: PageServerLoad = async ({ url }) => {
 	const searchParams = url.searchParams;

@@ -1,7 +1,7 @@
+import type { CreateRecipeModel } from '$lib/schemas/models';
 import type { DbClient } from '$lib/server/db';
 import { recipes } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
-import type { CreateRecipeModel } from '../models';
 
 export async function findRecipe(db: DbClient, id: string) {
 	return db.select().from(recipes).where(eq(recipes.id, id)).get();
