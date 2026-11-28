@@ -1,6 +1,5 @@
-import { form, getRequestEvent, query } from '$app/server';
+import { form, getRequestEvent } from '$app/server';
 import { login } from '$lib/server/auth';
-import { db } from '$lib/server/db';
 import * as v from 'valibot';
 
 export const loginUser = form(

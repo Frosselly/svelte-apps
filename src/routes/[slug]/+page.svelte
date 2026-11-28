@@ -36,7 +36,7 @@
 <main class="mx-auto flex w-full max-w-5xl flex-col gap-10 bg-cream px-4 py-10">
 	<div class="flex items-center justify-between">
 		<a
-			href="/recipe"
+			href="/"
 			class="flex items-center gap-2 text-sm font-medium text-ink-soft transition-colors hover:text-ink"
 		>
 			<svg

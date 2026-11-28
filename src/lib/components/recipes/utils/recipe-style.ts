@@ -1,6 +1,6 @@
 export const categoryStyles: Record<string, string> = {
-	dessert: 'bg-blush-300 text-ink',
-	dinner: 'bg-lavender-400 text-ink'
+	dessert: 'bg-blush-300 ',
+	dinner: 'bg-lavender-400'
 };
 
 export const categoryLabel: Record<string, string> = {
