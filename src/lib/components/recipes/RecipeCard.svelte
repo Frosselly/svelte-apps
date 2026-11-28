@@ -13,7 +13,7 @@
 </script>
 
 <a
-	href={`/recipe/${recipe.id}`}
+	href={`/${recipe.id}`}
 	class="group relative flex w-full flex-col overflow-hidden rounded-3xl bg-white/70 shadow-sm ring-1 ring-ink/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:ring-blush-500/40"
 >
 	<div class="relative aspect-[4/3] w-full overflow-hidden bg-blush-100">

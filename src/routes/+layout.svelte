@@ -37,14 +37,12 @@
 {/snippet}
 
 {#snippet newRecipeBtn()}
-	{#if page.url.pathname.includes('recipe')}
-		<a
-			href={resolve('/recipe/manage')}
+	<a
+			href={resolve('/manage')}
 			class=" flex items-center justify-center gap-2 rounded-full bg-ink px-5 py-2.5 font-sans text-sm font-semibold text-cream shadow-sm transition-transform hover:-translate-y-0.5"
 		>
 			<span class="text-nowrap">New recipe</span>
 		</a>
-	{/if}
 {/snippet}
 
 <svelte:head>
