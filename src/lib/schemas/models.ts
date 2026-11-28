@@ -34,7 +34,7 @@ export interface PagingResponse {
 export type Recipe = typeof recipeDBSchema.$inferSelect & {
 	ingredients: Ingredient[];
 	steps: string[];
-	categories: string[];
+	categories: {name:string}[];
 	author: { username: string };
 };
 

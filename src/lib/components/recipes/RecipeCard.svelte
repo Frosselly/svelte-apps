@@ -5,7 +5,7 @@
 		formatMinutes,
 		initials
 	} from '$lib/components/recipes/utils/recipe-style';
-	import type { Recipe } from '$lib/types';
+	import type { Recipe } from '$lib/schemas/models';
 
 	const { recipe }: { recipe: Recipe } = $props();
 
@@ -31,12 +31,14 @@
 			</div>
 		{/if}
 
-		{#if recipe.category}
-			<span
-				class={`absolute top-3 left-3 -rotate-2 rounded-full px-3 py-1 font-script text-base font-semibold shadow-sm ${categoryStyles[recipe.category]}`}
-			>
-				{categoryLabel[recipe.category]}
-			</span>
+		{#if recipe.categories}
+			{#each recipe.categories as category}
+				<span
+					class={`absolute top-3 left-3 -rotate-2 rounded-full px-3 py-1 font-script text-base font-semibold shadow-sm  text-ink ${categoryStyles[category.name] ?? 'bg-pink-300'}`}
+				>
+					{category.name}
+				</span>
+			{/each}
 		{/if}
 	</div>
 
@@ -56,9 +58,10 @@
 			<span
 				class="flex h-7 w-7 items-center justify-center rounded-full bg-mint-200 text-[11px] font-semibold text-ink"
 			>
-				{initials(recipe.authorName)}
+				{initials(recipe.author.username)}
 			</span>
-			<span class="text-xs text-ink-soft">{recipe.authorName ?? 'Unknown'}</span
+			<span class="text-xs text-ink-soft"
+				>{recipe.author.username ?? 'Unknown'}</span
 			>
 		</div>
 		{#if formatMinutes(totalTime)}
